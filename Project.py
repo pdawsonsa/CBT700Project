@@ -51,9 +51,38 @@ def _poles():
     poles = np.zeros((dim))
     poles = -1/taup
     return(poles) 
-    
+
+
+def _SVD(s):
+    [U, S, V] = np.linalg.svd(_Gp(s))
+    return(U, S, V)
       
 
+def _bode():
+    omega = np.logspace(-3,2,1000)
+    magPlot1 = np.zeros((len(omega)))
+    magPlot2 = np.zeros((len(omega)))
+    magPlot3 = np.zeros((len(omega)))
+    for i in range(len(omega)):
+        U, S, V = _SVD(omega[i]*1j)
+        magPlot1[i] = S[0]
+        magPlot2[i] = S[1]
+        magPlot3[i] = S[2]
+    plt.figure(01)
+    plt.clf()
+    plt.loglog(omega, magPlot1, 'r-')
+    plt.loglog(omega, magPlot2, 'b-')
+    plt.loglog(omega, magPlot3, 'g-')
+    plt.xlabel('Frequency')
+    ylabel('Singular value')
+    plt.grid(True)
+
+
+
+
+    
+  
+    
 #def _zeros():
 #    dim = np.shape(Kp)
 #    zeros = np.eye((dim[0]))
@@ -70,62 +99,38 @@ def _poles():
 
 #Frequency response of elements in matrix Gp:  Bode plots
 
-plt.figure(1)
-plt.clf()
-rows, cols = np.shape(Kp)
-Kc = 1
-for i in range(rows):
-    for j in range(cols):
-        plt.subplot(rows,cols,(3*j) + (i+1))
-        omega = np.linspace(0.001,10,10000)
-        GpMag = np.zeros((len(omega)))
-        def _Gp1(s):
-            G = Kp[i,j]*np.exp(-Dp[i,j]*s)/(taup[i,j]*s + 1)
-            return(G)
-        GpMagL = np.abs(Kc*_Gp1(omega*1j))
-        GpMagS = np.abs(1/(1 + (Kc*_Gp1(omega*1j))))
-        GpMagT = np.abs((Kc*_Gp1(omega*1j))/(1 + (Kc*_Gp1(omega*1j))))
-#        GpMag = 20*np.log(np.abs(_Gp(omega*1j,i,j)))
-        plt.loglog(omega,GpMagL,'r-')
-        plt.loglog(omega,GpMagS,'b-')
-        plt.loglog(omega,GpMagT,'g-')
-        plt.axis([np.min(omega), np.max(omega), 0, 100])
-        plt.grid(True)
-        plt.xlabel('Freq')
-        plt.ylabel('Mag')
-fig = plt.gcf()
-fig.subplots_adjust(bottom=0.05) 
-fig.subplots_adjust(top=0.95) 
-fig.subplots_adjust(left=0.05) 
-fig.subplots_adjust(right=0.99)  
-plt.suptitle('Magnitude of frequency responce')      
-plt.show()
+#plt.figure(1)
+#plt.clf()
+#rows, cols = np.shape(Kp)
+#Kc = 1
+#for i in range(rows):
+#    for j in range(cols):
+#        plt.subplot(rows,cols,(3*j) + (i+1))
+#        omega = np.linspace(0.001,10,10000)
+#        GpMag = np.zeros((len(omega)))
+#        def _Gp1(s):
+#            G = Kp[i,j]*np.exp(-Dp[i,j]*s)/(taup[i,j]*s + 1)
+#            return(G)
+#        GpMagL = np.abs(Kc*_Gp1(omega*1j))
+#        GpMagS = np.abs(1/(1 + (Kc*_Gp1(omega*1j))))
+#        GpMagT = np.abs((Kc*_Gp1(omega*1j))/(1 + (Kc*_Gp1(omega*1j))))
+##        GpMag = 20*np.log(np.abs(_Gp(omega*1j,i,j)))
+#        plt.loglog(omega,GpMagL,'r-')
+#        plt.loglog(omega,GpMagS,'b-')
+#        plt.loglog(omega,GpMagT,'g-')
+#        plt.axis([np.min(omega), np.max(omega), 0, 100])
+#        plt.grid(True)
+#        plt.xlabel('Freq')
+#        plt.ylabel('Mag')
+#fig = plt.gcf()
+#fig.subplots_adjust(bottom=0.05) 
+#fig.subplots_adjust(top=0.95) 
+#fig.subplots_adjust(left=0.05) 
+#fig.subplots_adjust(right=0.99)  
+#plt.suptitle('Magnitude of frequency responce')      
+#plt.show()
 
-plt.figure(2)
-plt.clf()
-rows, cols = np.shape(Kp)
-for i in range(rows):
-    for j in range(cols):
-        plt.subplot(rows,cols,(3*j) + (i+1))
-        omega = np.linspace(0.001,10,10000)
-        GpPhase = np.zeros((len(omega)))
-        def _Gp1(s):
-            G = Kp[i,j]*np.exp(-Dp[i,j]*s)/(taup[i,j]*s + 1)
-            return(G)
-        GpPhase = np.angle(_Gp1(omega*1j), deg=True)
-#        GpMag = 20*np.log(np.abs(_Gp(omega*1j,i,j)))
-        plt.semilogx(omega,GpPhase,'r-')
-        plt.axis([np.min(omega), np.max(omega), -200, 200])
-        plt.grid(True)
-        plt.xlabel('Freq')
-        plt.ylabel('Phase shift')
-fig = plt.gcf()
-fig.subplots_adjust(bottom=0.05) 
-fig.subplots_adjust(top=0.95) 
-fig.subplots_adjust(left=0.05) 
-fig.subplots_adjust(right=0.99)  
-plt.suptitle('Magnitude of frequency responce')      
-plt.show()
+
 
     
 [U, S, T] = np.linalg.svd(_Gp(0.1))
@@ -145,6 +150,7 @@ print('')
 #print(_zeros())
 #print('')
 
+U, S, V = _SVD(0.1)
 print('U values')
 print(U)
 print('')
@@ -155,4 +161,4 @@ print('T values')
 print(T)
 print('')
 
-
+_bode()
