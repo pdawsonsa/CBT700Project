@@ -46,16 +46,23 @@ def _Gd(s):
     return(G)
     
     
+def _SVD(s):
+    K = 1
+    G = _Gp(s)
+    L = K*G
+    S = 1/(np.eye(3) + L)
+    T = L/(np.eye(3) + L)
+    [U, S, V] = np.linalg.svd(L)
+    return(U, S, V)
+    
+    
 def _poles():  
     dim = np.shape(Kp)    
     poles = np.zeros((dim))
     poles = -1/taup
+    
+    
     return(poles) 
-
-
-def _SVD(s):
-    [U, S, V] = np.linalg.svd(_Gp(s))
-    return(U, S, V)
       
 
 def _bode():
@@ -63,19 +70,52 @@ def _bode():
     magPlot1 = np.zeros((len(omega)))
     magPlot2 = np.zeros((len(omega)))
     magPlot3 = np.zeros((len(omega)))
+    magPlot1dB = np.zeros((len(omega)))
+    magPlot2dB = np.zeros((len(omega)))
+    magPlot3dB = np.zeros((len(omega)))
+    condNum = np.zeros((len(omega)))
     for i in range(len(omega)):
         U, S, V = _SVD(omega[i]*1j)
-        magPlot1[i] = S[0]
-        magPlot2[i] = S[1]
-        magPlot3[i] = S[2]
-    plt.figure(01)
+        magPlot1[i] = (S[0])
+        magPlot2[i] = (S[1])
+        magPlot3[i] = (S[2])
+        magPlot1dB[i] = 20*np.log(S[0])
+        magPlot2dB[i] = 20*np.log(S[1])
+        magPlot3dB[i] = 20*np.log(S[2])
+        condNum[i] = S[0]/S[2]        
+     
+    plt.figure(11)
     plt.clf()
+    plt.subplot(211)
     plt.loglog(omega, magPlot1, 'r-')
     plt.loglog(omega, magPlot2, 'b-')
-    plt.loglog(omega, magPlot3, 'g-')
-    plt.xlabel('Frequency')
-    ylabel('Singular value')
+    plt.loglog(omega, magPlot3, 'k-')
+    plt.loglog(omega, np.ones((1000)), 'g-')
+    plt.xlabel('Frequency [rad/s]')
+    plt.ylabel('Singular value [dB]')
     plt.grid(True)
+    plt.subplot(212)
+    plt.semilogx(omega, condNum, 'r-')
+    plt.xlabel('Frequency [rad/s]')
+    plt.ylabel('Condition number')
+    plt.grid(True) 
+    
+#    plt.figure(12)
+#    plt.clf()
+    plt.subplot(211)
+    plt.semilogx(omega, magPlot1dB, 'r:')
+    plt.semilogx(omega, magPlot2dB, 'b:')
+    plt.semilogx(omega, magPlot3dB, 'k:')
+    plt.semilogx(omega, np.ones((1000)), 'g-')
+    plt.xlabel('Frequency [rad/s]')
+    plt.ylabel('Singular value [dB]')
+    plt.grid(True)
+    plt.subplot(212)
+    plt.semilogx(omega, condNum, 'r-')
+    plt.xlabel('Frequency [rad/s]')
+    plt.ylabel('Condition number')
+    plt.grid(True)
+
 
 
 
@@ -128,7 +168,6 @@ def _bode():
 #fig.subplots_adjust(left=0.05) 
 #fig.subplots_adjust(right=0.99)  
 #plt.suptitle('Magnitude of frequency responce')      
-#plt.show()
 
 
 
