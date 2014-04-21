@@ -2,7 +2,7 @@
 """
 Created on Sat Apr 12 15:12:17 2014
 
-@author: peterDawson
+@author: PeterDawson
 
 CBT700 Project: Controlability analysis of MIMO System
 """
@@ -110,100 +110,47 @@ def _bode():
     plt.ylabel('Condition number')
     plt.grid(True) 
     
-    plt.figure(12)
-    plt.clf()
-    plt.subplot(211)
-    plt.semilogx(omega, magPlot1dB, 'r-')
-    plt.semilogx(omega, magPlot2dB, 'b-')
-    plt.semilogx(omega, magPlot3dB, 'k-')
-    plt.semilogx(omega, np.ones((1000)), 'g-')
-    plt.xlabel('Frequency [rad/s]')
-    plt.ylabel('Singular value [dB]')
-    plt.grid(True)
-    plt.subplot(212)
-    plt.semilogx(omega, condNum, 'r-')
-    plt.xlabel('Frequency [rad/s]')
-    plt.ylabel('Condition number')
-    plt.grid(True)
-    magPlot1dB = np.zeros((len(omega)))
-    magPlot2dB = np.zeros((len(omega)))
-    magPlot3dB = np.zeros((len(omega)))
-    condNum = np.zeros((len(omega)))
-    for i in range(len(omega)):
-        U, S, V = _SVD_S(omega[i]*1j)
-        magPlot1[i] = (S[0])
-        magPlot2[i] = (S[1])
-        magPlot3[i] = (S[2])
-        magPlot1dB[i] = 20*np.log(S[0])
-        magPlot2dB[i] = 20*np.log(S[1])
-        magPlot3dB[i] = 20*np.log(S[2])
-        condNum[i] = S[0]/S[2] 
-    plt.subplot(211)
-    plt.semilogx(omega, magPlot1dB, 'r:')
-    plt.semilogx(omega, magPlot2dB, 'b:')
-    plt.semilogx(omega, magPlot3dB, 'k:')
-    plt.semilogx(omega, np.ones((1000)), 'g-')
-    plt.xlabel('Frequency [rad/s]')
-    plt.ylabel('Singular value [dB]')
-    plt.grid(True)
-    plt.subplot(212)
-    plt.semilogx(omega, condNum, 'b:')
-    plt.xlabel('Frequency [rad/s]')
-    plt.ylabel('Condition number')
-    plt.grid(True)
-
-
-
-
-
-    
-  
-    
-#def _zeros():
-#    dim = np.shape(Kp)
-#    zeros = np.eye((dim[0]))
-#    for i in range(dim[0]):
-#        for j in range(dim[1]):
-#            z0 = 2/Dp[i,j]   #Pade approx 1st order (2-Ds) = 0
-#            def _Gz(s):
-#                _Gz = Kp[i,j]*np.exp(-Dp[i,j]*s)/(taup[i,j]*s + 1)
-#                return(_Gz)
-#            zeros[i,j] = scipy.optimize.fsolve(_Gz,z0)
-#            
-#    return(zeros)
-  
-
-#Frequency response of elements in matrix Gp:  Bode plots
-
-#plt.figure(1)
-#plt.clf()
-#rows, cols = np.shape(Kp)
-#Kc = 1
-#for i in range(rows):
-#    for j in range(cols):
-#        plt.subplot(rows,cols,(3*j) + (i+1))
-#        omega = np.linspace(0.001,10,10000)
-#        GpMag = np.zeros((len(omega)))
-#        def _Gp1(s):
-#            G = Kp[i,j]*np.exp(-Dp[i,j]*s)/(taup[i,j]*s + 1)
-#            return(G)
-#        GpMagL = np.abs(Kc*_Gp1(omega*1j))
-#        GpMagS = np.abs(1/(1 + (Kc*_Gp1(omega*1j))))
-#        GpMagT = np.abs((Kc*_Gp1(omega*1j))/(1 + (Kc*_Gp1(omega*1j))))
-##        GpMag = 20*np.log(np.abs(_Gp(omega*1j,i,j)))
-#        plt.loglog(omega,GpMagL,'r-')
-#        plt.loglog(omega,GpMagS,'b-')
-#        plt.loglog(omega,GpMagT,'g-')
-#        plt.axis([np.min(omega), np.max(omega), 0, 100])
-#        plt.grid(True)
-#        plt.xlabel('Freq')
-#        plt.ylabel('Mag')
-#fig = plt.gcf()
-#fig.subplots_adjust(bottom=0.05) 
-#fig.subplots_adjust(top=0.95) 
-#fig.subplots_adjust(left=0.05) 
-#fig.subplots_adjust(right=0.99)  
-#plt.suptitle('Magnitude of frequency responce')      
+#    plt.figure(12)
+#    plt.clf()
+#    plt.subplot(211)
+#    plt.semilogx(omega, magPlot1dB, 'r-')
+#    plt.semilogx(omega, magPlot2dB, 'b-')
+#    plt.semilogx(omega, magPlot3dB, 'k-')
+#    plt.semilogx(omega, np.ones((1000)), 'g-')
+#    plt.xlabel('Frequency [rad/s]')
+#    plt.ylabel('Singular value [dB]')
+#    plt.grid(True)
+#    plt.subplot(212)
+#    plt.semilogx(omega, condNum, 'r-')
+#    plt.xlabel('Frequency [rad/s]')
+#    plt.ylabel('Condition number')
+#    plt.grid(True)
+#    magPlot1dB = np.zeros((len(omega)))
+#    magPlot2dB = np.zeros((len(omega)))
+#    magPlot3dB = np.zeros((len(omega)))
+#    condNum = np.zeros((len(omega)))
+#    for i in range(len(omega)):
+#        U, S, V = _SVD_S(omega[i]*1j)
+#        magPlot1[i] = (S[0])
+#        magPlot2[i] = (S[1])
+#        magPlot3[i] = (S[2])
+#        magPlot1dB[i] = 20*np.log(S[0])
+#        magPlot2dB[i] = 20*np.log(S[1])
+#        magPlot3dB[i] = 20*np.log(S[2])
+#        condNum[i] = S[0]/S[2] 
+#    plt.subplot(211)
+#    plt.semilogx(omega, magPlot1dB, 'r:')
+#    plt.semilogx(omega, magPlot2dB, 'b:')
+#    plt.semilogx(omega, magPlot3dB, 'k:')
+#    plt.semilogx(omega, np.ones((1000)), 'g-')
+#    plt.xlabel('Frequency [rad/s]')
+#    plt.ylabel('Singular value [dB]')
+#    plt.grid(True)
+#    plt.subplot(212)
+#    plt.semilogx(omega, condNum, 'b:')
+#    plt.xlabel('Frequency [rad/s]')
+#    plt.ylabel('Condition number')
+#    plt.grid(True)
 
 
 
