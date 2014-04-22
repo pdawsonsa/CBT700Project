@@ -46,8 +46,8 @@ def _Gd(s):
     return(G)
     
     
-def _SVD(s):
-    K = 1
+def _SVD(s):   #SVD of L = KGp
+    K = 1.
     G = _Gp(s)
     L = K*G
     S = 1/(np.eye(3) + L)
@@ -56,8 +56,8 @@ def _SVD(s):
     return(U, S, V)
     
     
-def _SVD_S(s):
-    K = 1
+def _SVD_S(s):   #SVD of S = 1/(I + L)
+    K = 1.
     G = _Gp(s)
     L = K*G
     S = 1/(np.eye(3) + L)
@@ -70,10 +70,24 @@ def _poles():
     dim = np.shape(Kp)    
     poles = np.zeros((dim))
     poles = -1/taup
-    
-    
-    return(poles) 
-      
+    poleValues = np.zeros((9))
+    poleDirs = np.zeros((9))
+    m = 0
+    for i in poles:
+        for j in range(3):
+            poleValues[m] = i[j]
+            m = m + 1
+#            print(i[j])
+    m = 0
+    for pole in poleValues:
+        U, S, V = _SVD(pole*1j)
+        poleDirs[m] = U.min()
+        m = m + 1
+#        print(U.min())
+    return(poleValues, poleDirs) 
+poleValues, poleDirs = _poles()
+for i in range(9):
+    print('Pole: %s | Direction: %s'%(round(poleValues[i], 2), poleDirs[i]))
 
 def _bode():
     omega = np.logspace(-3,2,1000)
@@ -110,53 +124,10 @@ def _bode():
     plt.ylabel('Condition number')
     plt.grid(True) 
     
-#    plt.figure(12)
-#    plt.clf()
-#    plt.subplot(211)
-#    plt.semilogx(omega, magPlot1dB, 'r-')
-#    plt.semilogx(omega, magPlot2dB, 'b-')
-#    plt.semilogx(omega, magPlot3dB, 'k-')
-#    plt.semilogx(omega, np.ones((1000)), 'g-')
-#    plt.xlabel('Frequency [rad/s]')
-#    plt.ylabel('Singular value [dB]')
-#    plt.grid(True)
-#    plt.subplot(212)
-#    plt.semilogx(omega, condNum, 'r-')
-#    plt.xlabel('Frequency [rad/s]')
-#    plt.ylabel('Condition number')
-#    plt.grid(True)
-#    magPlot1dB = np.zeros((len(omega)))
-#    magPlot2dB = np.zeros((len(omega)))
-#    magPlot3dB = np.zeros((len(omega)))
-#    condNum = np.zeros((len(omega)))
-#    for i in range(len(omega)):
-#        U, S, V = _SVD_S(omega[i]*1j)
-#        magPlot1[i] = (S[0])
-#        magPlot2[i] = (S[1])
-#        magPlot3[i] = (S[2])
-#        magPlot1dB[i] = 20*np.log(S[0])
-#        magPlot2dB[i] = 20*np.log(S[1])
-#        magPlot3dB[i] = 20*np.log(S[2])
-#        condNum[i] = S[0]/S[2] 
-#    plt.subplot(211)
-#    plt.semilogx(omega, magPlot1dB, 'r:')
-#    plt.semilogx(omega, magPlot2dB, 'b:')
-#    plt.semilogx(omega, magPlot3dB, 'k:')
-#    plt.semilogx(omega, np.ones((1000)), 'g-')
-#    plt.xlabel('Frequency [rad/s]')
-#    plt.ylabel('Singular value [dB]')
-#    plt.grid(True)
-#    plt.subplot(212)
-#    plt.semilogx(omega, condNum, 'b:')
-#    plt.xlabel('Frequency [rad/s]')
-#    plt.ylabel('Condition number')
-#    plt.grid(True)
-
-
 
     
-[U, S, T] = np.linalg.svd(_Gp(0.1))
-#[U, S, T] = np.linalg.svd([[5, 4],[3, 2]])  #Example 3.3 in Skogestad give me the correct SVD elements
+#[U, S, V] = np.linalg.svd(_Gp(0.1))
+#[U, S, V] = np.linalg.svd([[5, 4],[3, 2]])  #Example 3.3 in Skogestad give me the correct SVD elements
 
 
 print('Gp matrix:')
@@ -180,7 +151,16 @@ print('S values')
 print(S)
 print('')
 print('T values')
-print(T)
+print(V)
 print('')
 
 _bode()
+
+
+
+#def minsigma(s):
+#    U, Sigma, V = np.linalg.svd(_Gp(s))
+#    return Sigma.min()
+#
+#plt.
+#complex_plot(minsigma, (-5, 5), (-5, 5))
