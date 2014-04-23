@@ -71,23 +71,29 @@ def _poles():
     poles = np.zeros((dim))
     poles = -1/taup
     poleValues = np.zeros((9))
-    poleDirs = np.zeros((9))
+#    poleDirs = np.zeros((9))
+#    poleValues = np.empty(9,dtype=complex)
+    poleDirs = np.empty((3,9),dtype=complex)
     m = 0
     for i in poles:
         for j in range(3):
             poleValues[m] = i[j]
             m = m + 1
-#            print(i[j])
     m = 0
     for pole in poleValues:
         U, S, V = _SVD(pole*1j)
-        poleDirs[m] = U.min()
+        poleDirs[:,m] = U[:,0]
         m = m + 1
-#        print(U.min())
-    return(poleValues, poleDirs) 
-poleValues, poleDirs = _poles()
+    return(poleValues, poleDirs, U) 
+poleValues, poleDirs, U = _poles()
 for i in range(9):
-    print('Pole: %s | Direction: %s'%(round(poleValues[i], 2), poleDirs[i]))
+    print('Pole => %s'%(round(poleValues[i], 4)))
+    print('Output1 direction => %s'%(poleDirs[0,i]))
+    print('Output2 direction => %s'%(poleDirs[1,i]))
+    print('Output3 direction => %s'%(poleDirs[2,i]))
+#    print(S)
+#    print(V)
+    print('')
 
 def _bode():
     omega = np.logspace(-3,2,1000)
@@ -130,29 +136,29 @@ def _bode():
 #[U, S, V] = np.linalg.svd([[5, 4],[3, 2]])  #Example 3.3 in Skogestad give me the correct SVD elements
 
 
-print('Gp matrix:')
-print(_Gp(0.1))
-print('')
-print('Gd matrix:')
-print(_Gd(0.1))
-print('')
-print('Poles of Gp:')
-print(_poles())
-print('')
-#print('Zeros of Gp:')
-#print(_zeros())
+#print('Gp matrix:')
+#print(_Gp(0.1))
 #print('')
-
-U, S, V = _SVD(0.1)
-print('U values')
-print(U)
-print('')
-print('S values')
-print(S)
-print('')
-print('T values')
-print(V)
-print('')
+#print('Gd matrix:')
+#print(_Gd(0.1))
+#print('')
+#print('Poles of Gp:')
+#print(_poles())
+#print('')
+##print('Zeros of Gp:')
+##print(_zeros())
+##print('')
+#
+#U, S, V = _SVD(0.1)
+#print('U values')
+#print(U)
+#print('')
+#print('S values')
+#print(S)
+#print('')
+#print('T values')
+#print(V)
+#print('')
 
 _bode()
 
@@ -164,3 +170,18 @@ _bode()
 #
 #plt.
 #complex_plot(minsigma, (-5, 5), (-5, 5))
+
+#zeros1 = np.zeros((100),dtype=complex)
+#a = linspace(-5,1,100)
+#m = 0
+#for i in range(len(a)):
+##    for k in range(len(a)):
+#        U,S,V = la.svd(_Gp(a[i]*1j))
+#        zeros1[m] = S.min()
+#        m += 1
+#
+#print(zeros1)
+
+
+
+        
