@@ -17,6 +17,9 @@ import scipy
 import matplotlib.pyplot as plt
 
 
+#=============================================================================
+#======================= ASSIGNING OF GLOBAL VARIABLES =======================
+
 
 Kp = np.array([[35., 28., 10.], 
                [-15., 35., 15.], 
@@ -32,11 +35,16 @@ taud = np.array([50., 70., 100.])
 Dd = np.array([5., 5., 5.])
 
 
+#=============================================================================
+#========================== DEFINING OF FUNCTIONS ============================
+
+
 def Gp(s):
     dim = np.shape(Kp)
     G = np.zeros((dim))
     G = Kp*np.exp(-Dp*s)/(taup*s + 1)
     return(G)
+    
     
 
 def Gd(s):
@@ -44,6 +52,7 @@ def Gd(s):
     G = np.zeros((dim))
     G = Kd*np.exp(-Dd*s)/(taud*s + 1)
     return(G)
+    
     
     
 def SVD(s):   #SVD of L = KGp
@@ -56,6 +65,7 @@ def SVD(s):   #SVD of L = KGp
     return(U, S, V)
     
     
+    
 def SVD_S(s):   #SVD of S = 1/(I + L)
     K = 1.
     G = Gp(s)
@@ -64,6 +74,7 @@ def SVD_S(s):   #SVD of S = 1/(I + L)
     T = L/(np.eye(3) + L)
     [U, S, V] = np.linalg.svd(S)
     return(U, S, V)
+    
     
     
 def poles():  
@@ -83,13 +94,7 @@ def poles():
         poleDirs[:,m] = U[:,0]
         m = m + 1
     return(poleValues, poleDirs, U) 
-poleValues, poleDirs, U = poles()
-for i in range(9):
-    print('Pole => %s'%(round(poleValues[i], 4)))
-    print('Output1 direction => %s'%(poleDirs[0,i]))
-    print('Output2 direction => %s'%(poleDirs[1,i]))
-    print('Output3 direction => %s'%(poleDirs[2,i]))
-    print('')
+
 
 
 def bode():
@@ -131,6 +136,7 @@ def bode():
     fig.subplots_adjust(right=0.99)
     return(wB)
     
+    
 
 def bodeSVD():
     omega = np.logspace(-3,2,1000)
@@ -170,9 +176,9 @@ def bodeSVD():
     return(crossOver)
 
 
-
+#=============================================================================
+#=========================== OUTPUTS AND FIGURES =============================
     
-
 
 print('Gp matrix:')
 print(Gp(0.1))
@@ -180,6 +186,14 @@ print('')
 print('Gd matrix:')
 print(Gd(0.1))
 print('')
+
+poleValues, poleDirs, U = poles()
+for i in range(9):
+    print('Pole => %s'%(round(poleValues[i], 4)))
+    print('Output1 direction => %s'%(poleDirs[0,i]))
+    print('Output2 direction => %s'%(poleDirs[1,i]))
+    print('Output3 direction => %s'%(poleDirs[2,i]))
+    print('')
 
 print('')
 print('The bandwidth frequency in rad/s is:')
