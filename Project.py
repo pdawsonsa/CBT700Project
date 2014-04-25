@@ -17,6 +17,7 @@ import scipy
 import matplotlib.pyplot as plt
 
 
+
 #=============================================================================
 #======================= ASSIGNING OF GLOBAL VARIABLES =======================
 
@@ -83,16 +84,16 @@ def poles():
     poles = -1/taup
     poleValues = np.zeros((9))
     poleDirs = np.empty((3,9),dtype=complex)
-    m = 0
+    c = 0
     for i in poles:
         for j in range(3):
-            poleValues[m] = i[j]
-            m = m + 1
-    m = 0
+            poleValues[c] = i[j]
+            c = c + 1
+    c = 0
     for pole in poleValues:
         U, S, V = SVD(pole*1j)
-        poleDirs[:,m] = U[:,0]
-        m = m + 1
+        poleDirs[:,c] = U[:,0]
+        c = c + 1
     return(poleValues, poleDirs, U) 
 
 
@@ -107,7 +108,7 @@ def bode():
     plt.clf()    
     for i in range(3):
         for j in range(3):            
-            f = 0
+            f = 0                                           #f for flag
             for k in range(len(omega)):
                 magPlotL[k] = 20*np.log(np.abs(Gp(omega[k]*1j)[i,j]))
                 magPlotS[k] = 20*np.log(np.abs(1/(1 + Gp(omega[k]*1j)[i,j])))
@@ -123,15 +124,16 @@ def bode():
             plt.semilogx(omega, magPlotT, 'k-', label='T')
             plt.semilogx(omega, np.ones((1000))*-3, 'g-')
             plt.semilogx(lineX, lineY, 'g-')
+            plt.text(0.002,-90,'wB = %s rad/s'%(np.round(wB[i,j],3)), color='green')
 #            plt.xlabel('Frequency [rad/s]')
             plt.ylabel('Magnitude [dB]')
-            plt.title('Input%s => Output%s'%(j+1,i+1))
+            plt.title('Valve%s  =>  Level%s'%(j+1,i+1))
             plt.legend()
             plt.axis([None,None,-100,100])
             plt.grid(True)
     fig = plt.gcf()
-    fig.subplots_adjust(bottom=0.06) 
-    fig.subplots_adjust(top=0.95) 
+    fig.subplots_adjust(bottom=0.04) 
+    fig.subplots_adjust(top=0.97) 
     fig.subplots_adjust(left=0.04) 
     fig.subplots_adjust(right=0.99)
     return(wB)
@@ -144,7 +146,7 @@ def bodeSVD():
     magPlot2 = np.zeros((len(omega)))
     magPlot3 = np.zeros((len(omega)))
     condNum = np.zeros((len(omega)))
-    f = 0
+    f = 0                                                    #f for flag
     for i in range(len(omega)):
         U, S, V = SVD(omega[i]*1j)
         magPlot1[i] = 20*np.log(S[0])
@@ -153,7 +155,7 @@ def bodeSVD():
         condNum[i] = S[0]/S[2]  
         if (f < 1 and magPlot3[i] < 0):
             crossOver = omega[i]
-            f = 1
+            f = 1                                        
     lineX = np.ones(1000)*crossOver
     lineY = np.linspace(-100, 100, 1000)
     plt.figure(12)
@@ -164,6 +166,7 @@ def bodeSVD():
     plt.semilogx(omega, magPlot3, 'k-')
     plt.semilogx(omega, np.zeros((1000)), 'g-')
     plt.semilogx(lineX, lineY, 'g-')
+    plt.text(0.002,-90,'CrossOver = %s rad/s'%(np.round(crossOver,3)), color='green')
     plt.xlabel('Frequency [rad/s]')
     plt.ylabel('Singular value [dB]')
     plt.axis([None,None,-100,100])
@@ -174,6 +177,51 @@ def bodeSVD():
     plt.ylabel('Condition number')
     plt.grid(True)
     return(crossOver)
+    
+    
+def RGAw():
+    omega = np.logspace(-3,2,1000)
+    RGAvalues = np.zeros((len(omega),9))
+    for i in range(len(omega)):
+        G = np.abs(np.matrix(Gp(omega[i]*1j)))
+        RGAm = np.array(G)*np.array(G.I).T
+        RGAvalues[i,0] = (RGAm[0,0])
+        RGAvalues[i,1] = (RGAm[1,0])
+        RGAvalues[i,2] = (RGAm[2,0])
+        RGAvalues[i,3] = (RGAm[0,1])
+        RGAvalues[i,4] = (RGAm[1,1])
+        RGAvalues[i,5] = (RGAm[2,1])
+        RGAvalues[i,6] = (RGAm[0,2])
+        RGAvalues[i,7] = (RGAm[1,2])
+        RGAvalues[i,8] = (RGAm[2,2])
+    wB = bode()
+    plt.figure(21)
+    plt.clf()
+    for i in range(3):
+        for j in range(3):
+            n = 3*i+j
+            plt.subplot(3,3,n+1)
+            plt.semilogx(omega, RGAvalues[:,n],'b-', lw=2)
+            plt.semilogx(omega, np.ones((1000)), 'r:', lw=3)
+            lineX = np.ones(1000)*wB[i,j]
+            lineY = np.linspace(-1, 2, 1000)
+            plt.semilogx(lineX, lineY, 'g-')
+            plt.title('Valve%s  =>  Level%s'%(j+1,i+1))
+            plt.text(0.002,-0.8,'wB = %s rad/s'%(np.round(wB[i,j],3)), color='green')
+            plt.text(0.002, 1.1,'|$\lambda$$_i$$_j$| = 1',color='red')
+#            plt.xlabel('Frequency [rad/s]')
+            plt.ylabel('RGA value |$\lambda$$_i$$_j$|')
+            plt.axis([None,None,-1,2])
+            plt.grid(True)
+    fig = plt.gcf()
+    fig.subplots_adjust(bottom=0.04) 
+    fig.subplots_adjust(top=0.97) 
+    fig.subplots_adjust(left=0.04) 
+    fig.subplots_adjust(right=0.99)
+    return(G)
+
+print('RGA Matrix')    
+print(RGAw())  
 
 
 #=============================================================================
@@ -181,22 +229,22 @@ def bodeSVD():
     
 
 print('Gp matrix:')
-print(Gp(0.1))
+print(Gp(0))
 print('')
 print('Gd matrix:')
-print(Gd(0.1))
+print(Gd(0))
 print('')
 
-poleValues, poleDirs, U = poles()
-for i in range(9):
-    print('Pole => %s'%(round(poleValues[i], 4)))
-    print('Output1 direction => %s'%(poleDirs[0,i]))
-    print('Output2 direction => %s'%(poleDirs[1,i]))
-    print('Output3 direction => %s'%(poleDirs[2,i]))
-    print('')
+#poleValues, poleDirs, U = poles()
+#for i in range(9):
+#    print('Pole => %s'%(round(poleValues[i], 4)))
+#    print('Output1 direction => %s'%(poleDirs[0,i]))
+#    print('Output2 direction => %s'%(poleDirs[1,i]))
+#    print('Output3 direction => %s'%(poleDirs[2,i]))
+#    print('')
 
 print('')
-print('The bandwidth frequency in rad/s is:')
+print('The bandwidth frequencies in rad/s are:')
 print((np.round(bode(),3)))
 print('')
 
