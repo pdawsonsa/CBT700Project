@@ -15,6 +15,7 @@ import numpy as np
 import scipy.linalg as la
 import scipy
 import matplotlib.pyplot as plt
+from utils import RGA
 
 
 
@@ -179,12 +180,15 @@ def bodeSVD():
     return(crossOver)
     
     
+    
 def RGAw():
-    omega = np.logspace(-3,2,1000)
+    '''Computes the RGA for diagonal pairing at varying frequencies'''
+    omega = np.logspace(-3,3,1000)
     RGAvalues = np.zeros((len(omega),9))
+    RGAnum = np.zeros((len(omega)))
     for i in range(len(omega)):
-        G = np.abs(np.matrix(Gp(omega[i]*1j)))
-        RGAm = np.array(G)*np.array(G.I).T
+        G = np.matrix(Gp(omega[i]*1j))
+        RGAm = np.abs(np.array(G)*np.array(G.I).T)
         RGAvalues[i,0] = (RGAm[0,0])
         RGAvalues[i,1] = (RGAm[1,0])
         RGAvalues[i,2] = (RGAm[2,0])
@@ -194,6 +198,7 @@ def RGAw():
         RGAvalues[i,6] = (RGAm[0,2])
         RGAvalues[i,7] = (RGAm[1,2])
         RGAvalues[i,8] = (RGAm[2,2])
+        RGAnum[i] = np.sum(RGAm - np.identity(3))
     wB = bode()
     plt.figure(21)
     plt.clf()
@@ -206,22 +211,33 @@ def RGAw():
             lineX = np.ones(1000)*wB[i,j]
             lineY = np.linspace(-1, 2, 1000)
             plt.semilogx(lineX, lineY, 'g-')
-            plt.title('Valve%s  =>  Level%s'%(j+1,i+1))
+            plt.title('Valve%s  =>  Level%s'%(j+1,i+1), fontsize=12)
             plt.text(0.002,-0.8,'wB = %s rad/s'%(np.round(wB[i,j],3)), color='green')
             plt.text(0.002, 1.1,'|$\lambda$$_i$$_j$| = 1',color='red')
 #            plt.xlabel('Frequency [rad/s]')
             plt.ylabel('RGA value |$\lambda$$_i$$_j$|')
             plt.axis([None,None,-1,2])
             plt.grid(True)
+    plt.suptitle('RGA elements at varying frequencies |$\lambda$$_i$$_j$|', size=16)    
     fig = plt.gcf()
     fig.subplots_adjust(bottom=0.04) 
-    fig.subplots_adjust(top=0.97) 
+    fig.subplots_adjust(top=0.93) 
     fig.subplots_adjust(left=0.04) 
     fig.subplots_adjust(right=0.99)
-    return(G)
+    plt.figure(22)
+    plt.clf()
+    plt.semilogx(omega, RGAnum, 'r-')
+    lineX = np.ones(1000)*np.min(wB)
+    lineY = np.linspace(0, max(RGAnum), 1000)
+    plt.semilogx(lineX, lineY, 'g-')
+    plt.text(0.002,0.25,'min wB = %s rad/s'%(np.round(np.min(wB),3)), color='green')
+    plt.title('RGA number at varying frequencies', size=16)
+    plt.ylabel('RGA number')
+    plt.grid(True)
+    
+    
 
-print('RGA Matrix')    
-print(RGAw())  
+
 
 
 #=============================================================================
@@ -254,6 +270,6 @@ print('The crossover frequency is: %s rad/s'%(np.round(bodeSVD(),3)))
 print('')
 
 
-
+RGAw()
 
 print('============================== END ==================================')        
