@@ -31,7 +31,7 @@ taup = np.array([[52., 68., 60.],
                 [40., 41., 45.]])
 Dp = np.array([[10., 15., 20.],
                [15., 10., 15.],
-               [15., 15., 10.]])#*0.0  #multiply by 0.0 to remove effects of dead time.
+               [15., 15., 10.]])*1  #multiply by 0.0 to remove effects of dead time.
 Kd = np.array([1., 1., 0.8])
 taud = np.array([40., 35., 30.])
 Dd = np.array([60., 65., 70.])
@@ -67,20 +67,9 @@ def SVD(s):   #SVD of L = KGp
 #    T = L/S1
     [U_L, S_L, V_L] = np.linalg.svd(G)
     [U_S, S_S, V_S] = np.linalg.svd(S1)
-    return(S_L, S_S)
+    return(U_L, S_L, V_L, U_S, S_S, V_S)
     
-
-   
-    
-#def SVD_S(s):   #SVD of S = 1/(I + L)
-#    G = Gp(s)
-#    L = Kc*G
-#    S1 = la.inv((np.eye(3) + L))
-#    T = L/S1
-#    [U, S, V] = np.linalg.svd(S1)
-#    return(U, S, V)
-    
-    
+  
     
 def poles():  
     dim = np.shape(Kp)    
@@ -134,17 +123,85 @@ def bode():
 #            plt.xlabel('Frequency [rad/s]')
             plt.ylabel('Magnitude [dB]')
             plt.title('Valve%s  =>  Level%s'%(j+1,i+1), size=12)
-            plt.legend()
+            plt.legend(fontsize=12)
             plt.axis([None,None,-100,100])
             plt.grid(True)
     plt.suptitle('Bode plots of each element of Gp', size=16)
     fig = plt.gcf()
+    BG = fig.patch
+    BG.set_facecolor('white')
     fig.subplots_adjust(bottom=0.04) 
     fig.subplots_adjust(top=0.93) 
     fig.subplots_adjust(left=0.04) 
     fig.subplots_adjust(right=0.99)
     
     
+
+#def bodeSVD():
+#    omega = np.logspace(-3,2,1000)
+#    magPlotL1 = np.zeros((len(omega)))
+#    magPlotL2 = np.zeros((len(omega)))
+#    magPlotL3 = np.zeros((len(omega)))
+#    magPlotS1 = np.zeros((len(omega)))
+#    magPlotS2 = np.zeros((len(omega)))
+#    magPlotS3 = np.zeros((len(omega)))
+#    condNum = np.zeros((len(omega)))
+#    f = 0
+#    ff = 0                                                    #f for flag
+#    for i in range(len(omega)):
+#        U_L, S_L, V_L, U_S, S_S, V_S = SVD(omega[i]*1j)
+#        magPlotL1[i] = 20*np.log(S_L[0])
+#        magPlotL2[i] = 20*np.log(S_L[1])
+#        magPlotL3[i] = 20*np.log(S_L[2])
+#        magPlotS1[i] = 20*np.log(S_S[0])
+#        magPlotS2[i] = 20*np.log(S_S[1])
+#        magPlotS3[i] = 20*np.log(S_S[2])
+#        condNum[i] = S_L[0]/S_L[2]  
+#        if (f < 1 and magPlotL3[i] < 0):
+#            wC = omega[i]
+#            f = 1
+#        if (ff < 1 and magPlotS1[i] > -3):
+#            wB = omega[i]
+#            ff = 1                                                     
+#    lineX = np.ones(1000)*wB
+#    lineY = np.linspace(-100, 100, 1000)
+#    lineX1 = np.ones(1000)*wC
+#    lineY1 = np.linspace(-100, 100, 1000)
+#    plt.figure(12)
+#    plt.clf()
+#    plt.subplot(211)
+#    plt.semilogx(omega, magPlotL1, 'r-', label = 'G Max $\sigma$')
+#    plt.semilogx(omega, magPlotL3, 'k-', label = 'G Min $\sigma$')
+#    plt.semilogx(omega, magPlotS1, 'r:', label = 'S Max $\sigma$', lw=2)
+#    plt.semilogx(omega, magPlotS3, 'k:', label = 'S Min $\sigma$', lw=2)
+#    plt.semilogx(omega, np.ones((1000))*-3, 'g-')
+#    plt.semilogx(omega, np.ones((1000))*0, 'b-')
+#    plt.semilogx(lineX, lineY, 'g-')
+#    plt.semilogx(lineX1, lineY1, 'b-')
+#    plt.text(0.0015,15,'wB = %s rad/s'%(np.round(wB,3)), color='green')
+#    plt.text(0.0015,-20,'wC = %s rad/s'%(np.round(wC,3)), color='blue')
+#    plt.xlabel('Frequency [rad/s]')
+#    plt.ylabel('Singular value [dB]')
+#    plt.axis([None,None,-100,100])
+#    plt.legend(fontsize=12)
+#    fig = plt.gcf()
+#    BG = fig.patch
+#    BG.set_facecolor('white')
+#    plt.grid(True)
+#    plt.subplot(212)
+#    lineX = np.ones(1000)*wB
+#    lineY = np.linspace(0, 10, 1000)
+#    plt.semilogx(omega, condNum, 'r-')
+#    plt.semilogx(lineX, lineY, 'g-')
+#    plt.text(0.002,0.5,'wB = %s rad/s'%(np.round(wB,3)), color='green')
+#    plt.xlabel('Frequency [rad/s]')
+#    plt.ylabel('Condition number')
+#    plt.grid(True)
+#    fig = plt.gcf()
+#    BG = fig.patch
+#    BG.set_facecolor('white')
+#    return(wB,wC)
+
 
 def bodeSVD():
     omega = np.logspace(-3,2,1000)
@@ -158,96 +215,65 @@ def bodeSVD():
     f = 0
     ff = 0                                                    #f for flag
     for i in range(len(omega)):
-        S_L, S_S = SVD(omega[i]*1j)
-        magPlotL1[i] = 20*np.log(S_L[0])
-        magPlotL2[i] = 20*np.log(S_L[1])
-        magPlotL3[i] = 20*np.log(S_L[2])
-        magPlotS1[i] = 20*np.log(S_S[0])
-        magPlotS2[i] = 20*np.log(S_S[1])
-        magPlotS3[i] = 20*np.log(S_S[2])
+        U_L, S_L, V_L, U_S, S_S, V_S = SVD(omega[i]*1j)
+        magPlotL1[i] = S_L[0]
+        magPlotL2[i] = S_L[1]
+        magPlotL3[i] = S_L[2]
+        magPlotS1[i] = S_S[0]
+        magPlotS2[i] = S_S[1]
+        magPlotS3[i] = S_S[2]
         condNum[i] = S_L[0]/S_L[2]  
-        if (f < 1 and magPlotL3[i] < 0):
+        if (f < 1 and magPlotL3[i] < 1):
             wC = omega[i]
             f = 1
-        if (ff < 1 and magPlotS1[i] > -3):
+        if (ff < 1 and magPlotS1[i] > 0.707):
             wB = omega[i]
             ff = 1                                                     
     lineX = np.ones(1000)*wB
-    lineY = np.linspace(-100, 100, 1000)
+    lineY = np.linspace(0.001, 100, 1000)
     lineX1 = np.ones(1000)*wC
-    lineY1 = np.linspace(-100, 100, 1000)
+    lineY1 = np.linspace(0.001, 100, 1000)
     plt.figure(12)
     plt.clf()
     plt.subplot(211)
-    plt.semilogx(omega, magPlotL1, 'r-', label = 'G Max $\sigma$')
-    plt.semilogx(omega, magPlotL3, 'k-', label = 'G Min $\sigma$')
-    plt.semilogx(omega, magPlotS1, 'r:', label = 'S Max $\sigma$', lw=2)
-    plt.semilogx(omega, magPlotS3, 'k:', label = 'S Min $\sigma$', lw=2)
-    plt.semilogx(omega, np.ones((1000))*-3, 'g-')
-    plt.semilogx(omega, np.ones((1000))*0, 'b-')
-    plt.semilogx(lineX, lineY, 'g-')
-    plt.semilogx(lineX1, lineY1, 'b-')
-    plt.text(0.0015,15,'wB = %s rad/s'%(np.round(wB,3)), color='green')
-    plt.text(0.0015,-20,'wC = %s rad/s'%(np.round(wC,3)), color='blue')
+    plt.loglog(omega, magPlotL1, 'r-', label = 'G Max $\sigma$')
+    plt.loglog(omega, magPlotL3, 'k-', label = 'G Min $\sigma$')
+    plt.loglog(omega, magPlotS1, 'r:', label = 'S Max $\sigma$', lw=2)
+    plt.loglog(omega, magPlotS3, 'k:', label = 'S Min $\sigma$', lw=2)
+    plt.loglog(omega, np.ones((1000))*0.707, 'g-')
+    plt.loglog(omega, np.ones((1000))*1, 'b-')
+    plt.loglog(lineX, lineY, 'g-')
+    plt.loglog(lineX1, lineY1, 'b-')
+    plt.text(0.0015,0.3,'wB = %s rad/s'%(np.round(wB,3)), color='green')
+    plt.text(0.0015,1.5,'wC = %s rad/s'%(np.round(wC,3)), color='blue')
     plt.xlabel('Frequency [rad/s]')
     plt.ylabel('Singular value [dB]')
-    plt.axis([None,None,-100,100])
-    plt.legend()
+    plt.axis([None,None,0.01,100])
+    plt.legend(fontsize=12)
+    fig = plt.gcf()
+    BG = fig.patch
+    BG.set_facecolor('white')
     plt.grid(True)
     plt.subplot(212)
     lineX = np.ones(1000)*wB
     lineY = np.linspace(0, 10, 1000)
     plt.semilogx(omega, condNum, 'r-')
     plt.semilogx(lineX, lineY, 'g-')
-    plt.text(0.002,0.5,'wB = %s rad/s'%(np.round(wB,3)), color='green')
+    plt.text(0.0015,0.3,'wB = %s rad/s'%(np.round(wB,3)), color='green')
     plt.xlabel('Frequency [rad/s]')
     plt.ylabel('Condition number')
     plt.grid(True)
+    fig = plt.gcf()
+    BG = fig.patch
+    BG.set_facecolor('white')
     return(wB,wC)
-    
- 
-
-#def bodeSVD_S():
-#    omega = np.logspace(-3,2,1000)
-#    magPlot1 = np.zeros((len(omega)))
-#    magPlot2 = np.zeros((len(omega)))
-#    magPlot3 = np.zeros((len(omega)))
-#    condNum = np.zeros((len(omega)))
-#    f = 0                                                    #f for flag
-#    for i in range(len(omega)):
-#        U, S, V = SVD_S(omega[i]*1j)
-#        magPlot1[i] = 20*np.log(S[0])
-#        magPlot2[i] = 20*np.log(S[1])
-#        magPlot3[i] = 20*np.log(S[2])
-#        condNum[i] = S[0]/S[2]  
-#        if (f < 1 and magPlot1[i] > -3):
-#            wB = omega[i]
-#            f = 1                                        
-#    lineX = np.ones(1000)*wB
-#    lineY = np.linspace(-100, 100, 1000)
-#    plt.figure(13)
-#    plt.clf()
-#    plt.semilogx(omega, magPlot1, 'r-', label = 'Max SV')
-#    plt.semilogx(omega, magPlot3, 'k-', label = 'Min SV')
-#    plt.semilogx(omega, np.ones((1000))*-3, 'g-')
-#    plt.semilogx(lineX, lineY, 'g-')
-#    plt.text(0.002,-11,'wB = %s rad/s'%(np.round(wB,3)), color='green')
-#    plt.text(0.002,-2,'Mag = -3dB', color='green')
-#    plt.xlabel('Frequency [rad/s]')
-#    plt.ylabel('Singular value [dB]')
-#    plt.axis([None,None,-100,100])
-#    plt.legend()
-#    plt.grid(True)
-#    return(wB)
-
-
     
     
 def RGAw():
     '''
     Computes the RGA for diagonal pairing at varying frequencies
     '''
-    omega = np.logspace(-3,3,1000)
+    omega = np.logspace(-3,1,1000)
     RGAvalues = np.zeros((len(omega),9))
     RGAnum = np.zeros((len(omega)))
     for i in range(len(omega)):
@@ -274,25 +300,29 @@ def RGAw():
             lineX = np.ones(1000)*wB
             lineY = np.linspace(-1, 2, 1000)
             plt.semilogx(lineX, lineY, 'g-')
-            plt.title('Valve%s  =>  Level%s'%(j+1,i+1), fontsize=12)
-            plt.text(0.002,-0.8,'wB = %s rad/s'%(np.round(wB,3)), color='green')
-            plt.text(0.002, 1.1,'|$\lambda$$_i$$_j$| = 1',color='red')
+            plt.title('Valve%s  =>  Level%s'%(j+1,i+1), fontsize=10)
+            plt.text(0.002,1.8,'wB = %s rad/s'%(np.round(wB,3)), color='green', fontsize=10)
+            plt.text(0.002, 1.1,'|$\lambda$$_i$$_j$| = 1',color='red', fontsize=10)
             plt.ylabel('RGA value |$\lambda$$_i$$_j$|')
-            plt.axis([None,None,-1,2])
+            plt.axis([None,None,0,2])
             plt.grid(True)
     plt.suptitle('RGA elements at varying frequencies |$\lambda$$_i$$_j$|', size=16)    
     fig = plt.gcf()
+    BG = fig.patch
+    BG.set_facecolor('white')
     fig.subplots_adjust(bottom=0.04) 
-    fig.subplots_adjust(top=0.93) 
-    fig.subplots_adjust(left=0.04) 
-    fig.subplots_adjust(right=0.99)
+    fig.subplots_adjust(top=0.91) 
+    fig.subplots_adjust(left=0.08) 
+    fig.subplots_adjust(right=0.98)
     plt.figure(22)
     plt.clf()
     plt.semilogx(omega, RGAnum, 'b-')
+    BG = fig.patch
+    BG.set_facecolor('white')
     lineX = np.ones(1000)*np.min(wB)
     lineY = np.linspace(0, max(RGAnum), 1000)
     plt.semilogx(lineX, lineY, 'g-')
-    plt.text(0.002,0.25,'min wB = %s rad/s'%(np.round(np.min(wB),3)), color='green')
+    plt.text(0.002,3.6,'min wB = %s rad/s'%(np.round(np.min(wB),3)), color='green', fontsize=10)
     plt.title('RGA number at varying frequencies', size=16)
     plt.ylabel('RGA number')
     plt.grid(True)
@@ -321,9 +351,25 @@ def RGAw():
 #    print('Input3 direction => %s    Output3 direction => %s'%(poleDirsIn[2,i], poleDirsOut[2,i]))
 #    print('')
 
+bode()
 wB, wC = bodeSVD()
 RGAw()
-bode()
+U_L, S_L, V_L, U_S, S_S, V_S = SVD(0)
+
+print('The steady state SVD of the system is:')
+print('')
+print('Input directions:')
+print(np.round(V_L,3))
+print('')
+print('Singular values:')
+print(np.round(S_L,3))
+print('')
+print('Output directions:')
+print(np.round(U_L,3))
+print('')
+print('Condition number:')
+print(np.round(S_L[0]/S_L[2],3))
+
 
 
 print('')
