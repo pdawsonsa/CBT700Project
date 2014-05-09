@@ -70,14 +70,14 @@ def SVD_L(s):
 
 def SVD_S(s):   #SVD of L = KG
     L = Kc*G(s)   #SVD of L = KG
-    S = la.inv((np.eye(3) + L))
-    [U, S, V] = np.linalg.svd(S)
+    S1 = la.inv((np.eye(3) + L))
+    [U, S, V] = np.linalg.svd(S1)
     return(U, S, V)
 
 def SVD_T(s):   #SVD of L = KG
     L = Kc*G(s)   #SVD of L = KG
-    S = la.inv((np.eye(3) + L))
-    T = L*S
+    S1 = la.inv((np.eye(3) + L))
+    T = L*S1
     [U, S, V] = np.linalg.svd(T)
     return(U, S, V)    
     
@@ -116,13 +116,10 @@ def poles():
 def bodeSVD():
     w = np.logspace(-3,2,1000)
     magPlotL1 = np.zeros((len(w)))
-    magPlotL2 = np.zeros((len(w)))
     magPlotL3 = np.zeros((len(w)))
     magPlotS1 = np.zeros((len(w)))
-    magPlotS2 = np.zeros((len(w)))
     magPlotS3 = np.zeros((len(w)))
     magPlotT1 = np.zeros((len(w)))
-    magPlotT2 = np.zeros((len(w)))
     magPlotT3 = np.zeros((len(w)))
     condNum = np.zeros((len(w)))
     f = 0
@@ -133,13 +130,10 @@ def bodeSVD():
         U_S, S_S, V_S = SVD_S(w[i]*1j)
         U_T, S_T, V_T = SVD_T(w[i]*1j)   # Not optimal, revise!
         magPlotL1[i] = S_L[0]
-        magPlotL2[i] = S_L[1]
         magPlotL3[i] = S_L[2]
         magPlotS1[i] = S_S[0]
-        magPlotS2[i] = S_S[1]
         magPlotS3[i] = S_S[2]
         magPlotT1[i] = S_T[0]
-        magPlotT2[i] = S_T[1]
         magPlotT3[i] = S_T[2]
         condNum[i] = S_G[0]/S_G[2]  
         if (f < 1 and magPlotL3[i] < 1):
@@ -156,11 +150,11 @@ def bodeSVD():
     plt.clf()
     plt.subplot(211)
     plt.loglog(w, magPlotL1, 'r-', label = 'G Max $\sigma$')
-    plt.loglog(w, magPlotL3, 'r:', label = 'G Min $\sigma$', lw=2)
+    plt.loglog(w, magPlotL3, 'r-', label = 'G Min $\sigma$', alpha = 0.4)
     plt.loglog(w, magPlotS1, 'k-', label = 'S Max $\sigma$')
-    plt.loglog(w, magPlotS3, 'k:', label = 'S Min $\sigma$', lw=2)
+    plt.loglog(w, magPlotS3, 'k-', label = 'S Min $\sigma$', alpha = 0.4)
     plt.loglog(w, magPlotT1, 'b-', label = 'T Max $\sigma$')
-    plt.loglog(w, magPlotT3, 'b:', label = 'T Min $\sigma$', lw=2)    
+    plt.loglog(w, magPlotT3, 'b-', label = 'T Min $\sigma$', alpha = 0.4)    
     plt.loglog(w, np.ones((len(w)))*0.707, 'g-')
     plt.loglog(w, np.ones((len(w)))*1, 'b-')
     plt.loglog(lineX, lineY, 'g-')
@@ -279,7 +273,7 @@ def distRej():
     plt.clf()
     plt.subplot(211)
     plt.loglog(w, S1, 'r-', label = 'min $\sigma$S')
-    plt.loglog(w, S2, 'r:', lw=2, label = 'max $\sigma$S')
+    plt.loglog(w, S2, 'r-', alpha = 0.4, label = 'max $\sigma$S')
     plt.loglog(w, Gd1, 'k-', label = '1/||Gd||$_2$')
     plt.ylabel('Magnitude')
     plt.xlabel('Frequency [rad/s)]')
@@ -344,11 +338,11 @@ def perfectControl():
         Gd3[i] = np.max(np.abs(np.transpose(np.conj(U[2]))*Gdt[2]) - 1)
     plt.subplot(212)
     plt.semilogx(w, S1, 'r-', label = '$\sigma$$_1$(G)')
-    plt.semilogx(w, Gd1, 'r:', label = '|u$_1$$^H$g$_d$|')
+    plt.semilogx(w, Gd1, 'r-', label = '|u$_1$$^H$g$_d$|', alpha = 0.4)
     plt.semilogx(w, S2, 'k-', label = '$\sigma$$_2$(G)')
-    plt.semilogx(w, Gd2, 'k:', label = '|u$_2$$^H$g$_d$|')
+    plt.semilogx(w, Gd2, 'k-', label = '|u$_2$$^H$g$_d$|', alpha = 0.4)
     plt.semilogx(w, S3, 'b-', label = '$\sigma$$_3$(G)')
-    plt.semilogx(w, Gd3, 'b:', label = '|u$_3$$^H$g$_d$|')
+    plt.semilogx(w, Gd3, 'b-', label = '|u$_3$$^H$g$_d$|', alpha = 0.4)
     plt.ylabel('Magnitude')
     plt.xlabel('Frequency [rad/s)]')
     plt.axis([None, None, None, None])
@@ -361,6 +355,9 @@ def perfectControl():
     fig.subplots_adjust(top=0.9) 
     fig.subplots_adjust(left=0.2) 
     fig.subplots_adjust(right=0.9)        
+
+
+
         
     
     
