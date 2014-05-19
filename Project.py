@@ -24,20 +24,34 @@ import matplotlib.pyplot as plt
 
 Kp = np.array([[63., 39.2, 8.], 
                [-27., 49., 12.], 
-               [-18, -21., 16]])  
+               [-18., -21., 16.]])  
 taup = np.array([[52., 68., 60.],
                 [61., 47., 50.],
                 [40., 41., 45.]])
 Dp = np.array([[10., 15., 20.],
                [15., 10., 15.],
-               [15., 15., 10.]])*1  #multiply by 0.0 to remove effects of dead time.
-Kd = np.array([-12., -12., -9.6])
-taud = np.array([40., 35., 30.])
-Dd = np.array([30., 40., 50.])
-Kc = np.array([[1., 0., 0.], 
-               [0., 1., 0.], 
-               [0., 0., 1.]])*1
-#Kc = 1
+               [15., 15., 10.]])*1    #multiply by 0.0 to remove effects of dead time.
+Kd = np.array([[-2.25],[-1.75],[-0.8]])
+taud = np.array([[40.],[35.],[30.]])
+Dd = np.array([[30.],[40.],[50.]])
+Kc = np.array([[0.09, 0., 0.], 
+               [0., 0.112, 0.], 
+               [0., 0., 0.064]])
+
+
+
+#Uncertainty discription
+Kp_e = np.array([[0.1, 0.1, 0.1], 
+                   [0.1, 0.1, 0.1], 
+                   [0.1, 0.1, 0.1]]) 
+taup_e = np.array([[0.1, 0.1, 0.1], 
+                   [0.1, 0.1, 0.1], 
+                   [0.1, 0.1, 0.1]]) 
+Dp_e = np.array([[0.1, 0.1, 0.1], 
+                   [0.1, 0.1, 0.1], 
+                   [0.1, 0.1, 0.1]]) 
+                   
+
 
 #=============================================================================
 #========================== DEFINING OF FUNCTIONS ============================
@@ -46,6 +60,12 @@ Kc = np.array([[1., 0., 0.],
 def G(s):
     dim = np.shape(Kp)
     G = np.zeros((dim))
+    G = Kp*np.exp(-Dp*s)/(taup*s + 1)
+    return(G)
+    
+def Gp(s):
+    dim = np.shape(Kp)
+    Gp = np.zeros((dim))
     G = Kp*np.exp(-Dp*s)/(taup*s + 1)
     return(G)
     
@@ -82,14 +102,6 @@ def SVD_T(s):   #SVD of L = KG
     return(U, S, V)    
     
     
-#  def SVD(s):   #SVD of L = KG
-#    L = Kc*G(s)
-#    S = la.inv((np.eye(3) + L))
-#    T = L*S
-#    [U_L, S_L, V_L] = np.linalg.svd(G(s))
-#    [U_S, S_S, V_S] = np.linalg.svd(S)
-#    [U_T, S_T, V_T] = np.linalg.svd(T)
-#    return(U_L, S_L, V_L, U_S, S_S, V_S, U_T, S_T, V
     
 def poles():  
     dim = np.shape(Kp)    
@@ -114,7 +126,7 @@ def poles():
 
 
 def bodeSVD():
-    w = np.logspace(-3,2,1000)
+    w = np.logspace(-3,0,1000)
     magPlotL1 = np.zeros((len(w)))
     magPlotL3 = np.zeros((len(w)))
     magPlotS1 = np.zeros((len(w)))
@@ -128,9 +140,9 @@ def bodeSVD():
         U_G, S_G, V_G = SVD_G(w[i]*1j)
         U_L, S_L, V_L = SVD_L(w[i]*1j)
         U_S, S_S, V_S = SVD_S(w[i]*1j)
-        U_T, S_T, V_T = SVD_T(w[i]*1j)   # Not optimal, revise!
-        magPlotL1[i] = S_L[0]
-        magPlotL3[i] = S_L[2]
+        U_T, S_T, V_T = SVD_T(w[i]*1j)   
+        magPlotL1[i] = S_G[0]
+        magPlotL3[i] = S_G[2]
         magPlotS1[i] = S_S[0]
         magPlotS3[i] = S_S[2]
         magPlotT1[i] = S_T[0]
@@ -142,10 +154,10 @@ def bodeSVD():
         if (ff < 1 and magPlotS1[i] > 0.707):
             wB = w[i]
             ff = 1                                                     
-    lineX = np.ones(len(w))*wB
-    lineY = np.linspace(0.001, 100, len(w))
-    lineX1 = np.ones(len(w))*wC
-    lineY1 = np.linspace(0.001, 100, len(w))
+    lineX = np.ones(10)*wB
+    lineY = np.linspace(0.001, 100, 10)
+    lineX1 = np.ones(10)*wC
+    lineY1 = np.linspace(0.001, 100, 10)
     plt.figure(1)
     plt.clf()
     plt.subplot(211)
@@ -153,8 +165,6 @@ def bodeSVD():
     plt.loglog(w, magPlotL3, 'r-', label = 'G Min $\sigma$', alpha = 0.4)
     plt.loglog(w, magPlotS1, 'k-', label = 'S Max $\sigma$')
     plt.loglog(w, magPlotS3, 'k-', label = 'S Min $\sigma$', alpha = 0.4)
-    plt.loglog(w, magPlotT1, 'b-', label = 'T Max $\sigma$')
-    plt.loglog(w, magPlotT3, 'b-', label = 'T Min $\sigma$', alpha = 0.4)    
     plt.loglog(w, np.ones((len(w)))*0.707, 'g-')
     plt.loglog(w, np.ones((len(w)))*1, 'b-')
     plt.loglog(lineX, lineY, 'g-')
@@ -163,15 +173,15 @@ def bodeSVD():
     plt.text(0.0015,1.5,'wC = %s rad/s'%(np.round(wC,3)), color='blue')
     plt.xlabel('Frequency [rad/s]')
     plt.ylabel('Singular value [dB]')
-    plt.axis([None,None,0.001,100])
+    plt.axis([None,None,0.01,100])
     plt.legend(fontsize=12)
     fig = plt.gcf()
     BG = fig.patch
     BG.set_facecolor('white')
     plt.grid(True)
     plt.subplot(212)
-    lineX = np.ones(len(w))*wB
-    lineY = np.linspace(0, 10, len(w))
+    lineX = np.ones(10)*wB
+    lineY = np.linspace(0, 12, 10)
     plt.semilogx(w, condNum, 'r-')
     plt.semilogx(lineX, lineY, 'g-')
     plt.text(0.0015,0.3,'wB = %s rad/s'%(np.round(wB,3)), color='green')
@@ -187,7 +197,62 @@ def bodeSVD():
     fig.subplots_adjust(right=0.9)
     plt.grid(True)
     return(wB,wC)
-    
+
+
+
+def perf_Wp():
+    w = np.logspace(-3,0,1000)
+    magPlotS1 = np.zeros((len(w)))
+    magPlotS3 = np.zeros((len(w)))
+    magPlotT1 = np.zeros((len(w)))
+    magPlotT3 = np.zeros((len(w)))
+    Wp = np.zeros((len(w)))
+    f = 0                                    #f for flag
+    for i in range(len(w)):
+        U_S, S_S, V_S = SVD_S(w[i]*1j)
+        U_T, S_T, V_T = SVD_T(w[i]*1j)  
+        magPlotS1[i] = S_S[0]
+        magPlotS3[i] = S_S[2]
+        magPlotT1[i] = S_T[0]
+        magPlotT3[i] = S_T[2]
+        if (f < 1 and magPlotS1[i] > 0.707):
+            wB = w[i]
+            f = 1  
+    M = 2
+    A = 0.5
+    for i in range(len(w)):
+        Wp[i] = np.abs((w[i]*1j/M + wB) / (w[i]*1j + wB*A))                                              
+    lineX = np.ones(10)*wB
+    lineY = np.linspace(0.001, 100, 10)
+    plt.figure(2)
+    plt.clf()
+    plt.subplot(211)
+    plt.loglog(w, magPlotS1, 'r-', label = 'Max $\sigma$(S)')
+    plt.loglog(w, 1./Wp, 'k:', label = '|1/W$_P$|', lw=2)
+    plt.axhline(0.707, color='green')
+    plt.axvline(wB, color='green')
+    plt.text(0.0015,0.3,'wB = %s rad/s'%(np.round(wB,3)), color='green')
+    plt.xlabel('Frequency [rad/s]')
+    plt.ylabel('Magnitude')
+    plt.axis([None,None,0.1,10])
+    plt.legend(fontsize=12)
+    plt.grid(True)
+    plt.subplot(212)
+    plt.semilogx(w, magPlotS1*Wp, 'r-')
+    plt.axhline(1, color='blue', ls=':', lw=2)
+    plt.text(0.06, 1.85, '||W$_P$S||$_{inf}$')
+    plt.xlabel('Frequency [rad/s]')
+    plt.ylabel('Magnitude')
+    fig = plt.gcf()
+    BG = fig.patch
+    BG.set_facecolor('white')
+    fig.subplots_adjust(bottom=0.2) 
+    fig.subplots_adjust(top=0.9) 
+    fig.subplots_adjust(left=0.2) 
+    fig.subplots_adjust(right=0.9)
+    plt.grid(True)
+    plt.show()
+    return(wB,wC)    
     
     
 def RGAw():
@@ -210,7 +275,7 @@ def RGAw():
         RGAvalues[i,7] = (RGAm[1,2])
         RGAvalues[i,8] = (RGAm[2,2])
         RGAnum[i] = np.sum(RGAm - np.identity(3))
-    plt.figure(2)
+    plt.figure(3)
     plt.clf()
     for i in range(3):
         for j in range(3):
@@ -218,8 +283,8 @@ def RGAw():
             plt.subplot(3,3,n+1)
             plt.semilogx(w, RGAvalues[:,n],'b-', lw=2)
             plt.semilogx(w, np.ones((1000)), 'r:', lw=3)
-            lineX = np.ones(1000)*wB
-            lineY = np.linspace(-1, 2, 1000)
+            lineX = np.ones(10)*wB
+            lineY = np.linspace(-1, 2, 10)
             plt.semilogx(lineX, lineY, 'g-')
             plt.title('Valve%s  =>  Level%s'%(j+1,i+1), fontsize=10)
             plt.text(0.002,1.8,'wB = %s rad/s'%(np.round(wB,3)), color='green', fontsize=10)
@@ -235,14 +300,14 @@ def RGAw():
     fig.subplots_adjust(top=0.91) 
     fig.subplots_adjust(left=0.08) 
     fig.subplots_adjust(right=0.98)
-    plt.figure(3)
+    plt.figure(4)
     plt.clf()
     plt.subplot(212)
     plt.semilogx(w, RGAnum, 'b-')
     BG = fig.patch
     BG.set_facecolor('white')
-    lineX = np.ones(1000)*np.min(wB)
-    lineY = np.linspace(0, max(RGAnum), 1000)
+    lineX = np.ones(10)*np.min(wB)
+    lineY = np.linspace(0, max(RGAnum), 10)
     plt.semilogx(lineX, lineY, 'g-')
     plt.text(0.002,3.6,'min wB = %s rad/s'%(np.round(np.min(wB),3)), color='green', fontsize=10)
     plt.title('RGA number at varying frequencies', size=16)
@@ -256,7 +321,8 @@ def RGAw():
     fig.subplots_adjust(left=0.2) 
     fig.subplots_adjust(right=0.9)
     plt.grid(True)
-    
+    plt.show()
+
     
 
 def distRej():
@@ -264,22 +330,44 @@ def distRej():
     S1 = np.zeros((len(w)))
     S2 = np.zeros((len(w)))
     Gd1 = np.zeros((len(w)))
+    distCondNum = np.zeros((len(w)))
+    condNum = np.zeros((len(w)))
     for i in range(len(w)):
         U, S, V = SVD_S(w[i]*1j)
         S1[i] = S[2]                      #S = 1/|L + 1| 
         S2[i] = S[0]
         Gd1[i] = 1/la.norm(Gd(w[i]*1j),2)   #Returns largest sing value of Gd(wj)
-    plt.figure(4)
+        distCondNum[i] = la.norm(G(w[i]*1j),2)*la.norm(la.inv(G(w[i]*1j))*Gd1[i]*Gd(w[i]*1j),2)
+        condNum[i] = la.norm(G(w[i]*1j),2)*la.norm(la.inv(G(w[i]*1j)),2)
+    plt.figure(5)
     plt.clf()
     plt.subplot(211)
+    lineX = np.ones(10)*wB
+    lineY = np.linspace(0.01, 100, 10)
     plt.loglog(w, S1, 'r-', label = 'min $\sigma$S')
     plt.loglog(w, S2, 'r-', alpha = 0.4, label = 'max $\sigma$S')
     plt.loglog(w, Gd1, 'k-', label = '1/||Gd||$_2$')
+    plt.loglog(lineX, lineY, 'g-')
     plt.ylabel('Magnitude')
     plt.xlabel('Frequency [rad/s)]')
+    plt.text(0.0015,20,'wB = %s rad/s'%(np.round(wB,3)), color='green')
     plt.axis([None, None, None, None])
     plt.grid(True)
     plt.legend(fontsize = 12)
+    fig = plt.gcf()
+    BG = fig.patch
+    BG.set_facecolor('white')
+    plt.subplot(212)
+    lineY = np.linspace(0, 12, 10)
+    plt.semilogx(w, distCondNum, 'r-', label = 'Dist CondNum')
+    plt.semilogx(w, condNum, 'k-', label = 'CondNum')
+    plt.semilogx(lineX, lineY, 'g-')
+    plt.ylabel('Disturbance condtion number')
+    plt.xlabel('Frequency [rad/s)]')
+    plt.text(0.0015,10.1,'wB = %s rad/s'%(np.round(wB,3)), color='green')
+    plt.axis([None, None, 0, None])
+    plt.legend(fontsize = 12)
+    plt.grid(True)
     fig = plt.gcf()
     BG = fig.patch
     BG.set_facecolor('white')
@@ -287,8 +375,9 @@ def distRej():
     fig.subplots_adjust(top=0.9) 
     fig.subplots_adjust(left=0.2) 
     fig.subplots_adjust(right=0.9)
-    
+    plt.show()
 
+    
 
 def perfectControl():
     #For perfect cotnrol
@@ -299,10 +388,10 @@ def perfectControl():
     for i in range(len(w)):
         Gt = G(w[i]*1j)                 #Gt just a temp assignmnet for G
         Gdt = Gd(w[i]*1j)               #Gdt just a temp assignmnet for Gd
-        Gd1[i] = la.norm(la.inv(Gt)*Gdt[0], ord=inf)
-        Gd2[i] = la.norm(la.inv(Gt)*Gdt[1], ord=inf)
-        Gd3[i] = la.norm(la.inv(Gt)*Gdt[2], ord=inf)
-    plt.figure(5)
+        Gd1[i] = la.norm(la.inv(Gt)*Gdt[0], ord=np.inf)
+        Gd2[i] = la.norm(la.inv(Gt)*Gdt[1], ord=np.inf)
+        Gd3[i] = la.norm(la.inv(Gt)*Gdt[2], ord=np.inf)
+    plt.figure(6)
     plt.clf()
     plt.subplot(211)
     plt.semilogx(w, Gd1, 'r-', label = '||G$^{-1}$g$_d$1||$_{max}$')
@@ -354,25 +443,12 @@ def perfectControl():
     fig.subplots_adjust(bottom=0.2) 
     fig.subplots_adjust(top=0.9) 
     fig.subplots_adjust(left=0.2) 
-    fig.subplots_adjust(right=0.9)        
+    fig.subplots_adjust(right=0.9)   
+    plt.show()     
 
-
-
-        
     
     
 def nyqPlot():
-    """w_start and w_end is the number that would be 10**(number)"""
-#    def mod(w):
-#        return np.abs(G(w))-1
-#
-#    w_start_n = sc.optimize.fsolve(mod, 0.001)
-#    print w_start_n
-
-#    plt.plot(np.real(G(w_start_n)), np.imag(G(w_start_n)), 'rD')
-#    w_start = np.log(w_start_n)
-
-    
     w = np.logspace(-3, 2, 10000)    
     GL = np.zeros((len(w)), dtype=complex)
     x = np.zeros((len(w)))
@@ -381,25 +457,23 @@ def nyqPlot():
         L = Kc*G(w[i]*1j)
         GL[i] = la.det(np.eye(3) + L)
         x[i] = np.real(GL[i])
-        y[i] = np.imag(GL[i])
-        
-    plt.figure(6)
+        y[i] = np.imag(GL[i])        
+    plt.figure(7)
     plt.clf()
-    plt.plot(x, y, 'b+')
+    plt.plot(x, y, 'k-', lw=1)
     plt.xlabel('Re G(wj)')
     plt.ylabel('Im G(wj)')
-
     # plotting a unit circle
     x = np.linspace(-1, 1, 200)
-
     y_upper = np.sqrt(1-(x)**2)
     y_down = -1*np.sqrt(1-(x)**2)
-    plt.plot(x, y_upper, 'r-', x, y_down, 'r-')
+    plt.plot(x, y_upper, 'b:', x, y_down, 'b:', lw=2)
+    plt.plot(0, 0, 'r*', ms = 10)
     plt.grid(True)
     n = 2
     plt.axis([-n,n,-n,n])
+    plt.show()
 
-    print "finished"
 
 
 
@@ -424,6 +498,7 @@ def nyqPlot():
 #    print('')
 
 wB, wC = bodeSVD()
+perf_Wp()
 RGAw()
 distRej()
 perfectControl()
