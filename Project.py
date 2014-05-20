@@ -15,6 +15,7 @@ import numpy as np
 import scipy.linalg as la
 import scipy
 import matplotlib.pyplot as plt
+import utils
 
 
 
@@ -63,12 +64,20 @@ def G(s):
     G = Kp*np.exp(-Dp*s)/(taup*s + 1)
     return(G)
     
+def L(s):
+    return(Kc*G(s))   #SVD of L = KG)
+    
+def S(s):
+    return(la.inv((np.eye(3) + L(s))))   #SVD of S = 1/(I + L)
+    
+def T(s):
+    return(L(s)*S(s))   #SVD of T = L/(I + L)
+    
 def Gp(s):
     dim = np.shape(Kp)
     Gp = np.zeros((dim))
     G = Kp*np.exp(-Dp*s)/(taup*s + 1)
-    return(G)
-    
+    return(G)  
     
 
 def Gd(s):
@@ -76,31 +85,6 @@ def Gd(s):
     G = np.zeros((dim))
     G = Kd*np.exp(-Dd*s)/(taud*s + 1)
     return(G)
-    
-    
-    
-def SVD_G(s):   
-    [U, S, V] = np.linalg.svd(G(s))
-    return(U, S, V)   
-    
-def SVD_L(s):   
-    L = Kc*G(s)   #SVD of L = KG
-    [U, S, V] = np.linalg.svd(L)
-    return(U, S, V)   
-
-def SVD_S(s):   #SVD of L = KG
-    L = Kc*G(s)   #SVD of L = KG
-    S1 = la.inv((np.eye(3) + L))
-    [U, S, V] = np.linalg.svd(S1)
-    return(U, S, V)
-
-def SVD_T(s):   #SVD of L = KG
-    L = Kc*G(s)   #SVD of L = KG
-    S1 = la.inv((np.eye(3) + L))
-    T = L*S1
-    [U, S, V] = np.linalg.svd(T)
-    return(U, S, V)    
-    
     
     
 def poles():  
@@ -117,7 +101,7 @@ def poles():
             c = c + 1
     c = 0
     for pole in poleValues:
-        U, S, V = SVD_G(pole*1j)
+        U, Sv, V = utils.SVD(G(pole*1j))
         poleDirsIn[:,c] = V[:,0]
         poleDirsOut[:,c] = U[:,0]
         c = c + 1
@@ -137,17 +121,17 @@ def bodeSVD():
     f = 0
     ff = 0                                                    #f for flag
     for i in range(len(w)):
-        U_G, S_G, V_G = SVD_G(w[i]*1j)
-        U_L, S_L, V_L = SVD_L(w[i]*1j)
-        U_S, S_S, V_S = SVD_S(w[i]*1j)
-        U_T, S_T, V_T = SVD_T(w[i]*1j)   
-        magPlotL1[i] = S_G[0]
-        magPlotL3[i] = S_G[2]
-        magPlotS1[i] = S_S[0]
-        magPlotS3[i] = S_S[2]
-        magPlotT1[i] = S_T[0]
-        magPlotT3[i] = S_T[2]
-        condNum[i] = S_G[0]/S_G[2]  
+        U_G, Sv_G, V_G = utils.SVD(G(w[i]*1j))
+        U_L, Sv_L, V_L = utils.SVD(L(w[i]*1j))
+        U_S, Sv_S, V_S = utils.SVD(S(w[i]*1j))
+        U_T, Sv_T, V_T = utils.SVD(T(w[i]*1j))  
+        magPlotL1[i] = Sv_G[0]
+        magPlotL3[i] = Sv_G[2]
+        magPlotS1[i] = Sv_S[0]
+        magPlotS3[i] = Sv_S[2]
+        magPlotT1[i] = Sv_T[0]
+        magPlotT3[i] = Sv_T[2]
+        condNum[i] = Sv_G[0]/Sv_G[2]  
         if (f < 1 and magPlotL3[i] < 1):
             wC = w[i]
             f = 1
@@ -204,17 +188,12 @@ def perf_Wp():
     w = np.logspace(-3,0,1000)
     magPlotS1 = np.zeros((len(w)))
     magPlotS3 = np.zeros((len(w)))
-    magPlotT1 = np.zeros((len(w)))
-    magPlotT3 = np.zeros((len(w)))
     Wp = np.zeros((len(w)))
     f = 0                                    #f for flag
     for i in range(len(w)):
-        U_S, S_S, V_S = SVD_S(w[i]*1j)
-        U_T, S_T, V_T = SVD_T(w[i]*1j)  
-        magPlotS1[i] = S_S[0]
-        magPlotS3[i] = S_S[2]
-        magPlotT1[i] = S_T[0]
-        magPlotT3[i] = S_T[2]
+        U, Sv, V = utils.SVD(S(w[i]*1j))
+        magPlotS1[i] = Sv[0]
+        magPlotS3[i] = Sv[2]
         if (f < 1 and magPlotS1[i] > 0.707):
             wB = w[i]
             f = 1  
@@ -333,9 +312,9 @@ def distRej():
     distCondNum = np.zeros((len(w)))
     condNum = np.zeros((len(w)))
     for i in range(len(w)):
-        U, S, V = SVD_S(w[i]*1j)
-        S1[i] = S[2]                      #S = 1/|L + 1| 
-        S2[i] = S[0]
+        U, Sv, V = utils.SVD(S(w[i]*1j))
+        S1[i] = Sv[2]                      #S = 1/|L + 1| 
+        S2[i] = Sv[0]
         Gd1[i] = 1/la.norm(Gd(w[i]*1j),2)   #Returns largest sing value of Gd(wj)
         distCondNum[i] = la.norm(G(w[i]*1j),2)*la.norm(la.inv(G(w[i]*1j))*Gd1[i]*Gd(w[i]*1j),2)
         condNum[i] = la.norm(G(w[i]*1j),2)*la.norm(la.inv(G(w[i]*1j)),2)
@@ -417,11 +396,11 @@ def perfectControl():
     Gd2 = np.zeros((len(w)))
     Gd3 = np.zeros((len(w)))
     for i in range(len(w)):
-        U,S,V = la.svd(G(w[i]*1j))
+        U, Sv ,V = utils.SVD(G(w[i]*1j))
         Gdt = Gd(w[i]*1j)               #Gdt just a temp assignmnet for Gd
-        S1[i] = S[0]
-        S2[i] = S[1]
-        S3[i] = S[2]
+        S1[i] = Sv[0]
+        S2[i] = Sv[1]
+        S3[i] = Sv[2]
         Gd1[i] = np.max(np.abs(np.transpose(np.conj(U[0]))*Gdt[0]) - 1)
         Gd2[i] = np.max(np.abs(np.transpose(np.conj(U[1]))*Gdt[1]) - 1)
         Gd3[i] = np.max(np.abs(np.transpose(np.conj(U[2]))*Gdt[2]) - 1)
@@ -476,8 +455,6 @@ def nyqPlot():
 
 
 
-
-
 #=============================================================================
 #=========================== OUTPUTS AND FIGURES =============================
     
@@ -503,7 +480,7 @@ RGAw()
 distRej()
 perfectControl()
 nyqPlot()
-U, S, V = SVD_G(0)
+U, SV, V = utils.SVD(G(0))
 
 
 print('The steady state SVD of the system is:')
@@ -512,13 +489,13 @@ print('Input directions:')
 print(np.round(V,3))
 print('')
 print('Singular values:')
-print(np.round(S,3))
+print(np.round(SV,3))
 print('')
 print('Output directions:')
 print(np.round(U,3))
 print('')
 print('Condition number:')
-print(np.round(S[0]/S[2],3))
+print(np.round(SV[0]/SV[2],3))
 
 
 
