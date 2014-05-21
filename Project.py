@@ -10,10 +10,8 @@ print('')
 print('============================ Started ================================')
 print('')
 
-import control as cn
 import numpy as np
 import scipy.linalg as la
-import scipy
 import matplotlib.pyplot as plt
 import utils
 
@@ -22,7 +20,7 @@ import utils
 #=============================================================================
 #======================= ASSIGNING OF GLOBAL VARIABLES =======================
 
-
+#Transfer function parameters
 Kp = np.array([[63., 39.2, 8.], 
                [-27., 49., 12.], 
                [-18., -21., 16.]])  
@@ -31,27 +29,20 @@ taup = np.array([[52., 68., 60.],
                 [40., 41., 45.]])
 Dp = np.array([[10., 15., 20.],
                [15., 10., 15.],
-               [15., 15., 10.]])*1    #multiply by 0.0 to remove effects of dead time.
+               [15., 15., 10.]])*1    
 Kd = np.array([[-2.25],[-1.75],[-0.8]])
 taud = np.array([[40.],[35.],[30.]])
 Dd = np.array([[30.],[40.],[50.]])
-Kc = np.array([[0.09, 0., 0.], 
-               [0., 0.112, 0.], 
-               [0., 0., 0.064]])
 
 
+#Controller
+#Kc = np.array([[0.09, 0., 0.], 
+#               [0., 0.112, 0.],            #Plant as found controller
+#               [0., 0., 0.064]])
+Kc = np.array([[0.1, 0., 0.], 
+               [0., 0.4, 0.], 
+               [0., 0., 0.4]])
 
-#Uncertainty discription
-Kp_e = np.array([[0.1, 0.1, 0.1], 
-                   [0.1, 0.1, 0.1], 
-                   [0.1, 0.1, 0.1]]) 
-taup_e = np.array([[0.1, 0.1, 0.1], 
-                   [0.1, 0.1, 0.1], 
-                   [0.1, 0.1, 0.1]]) 
-Dp_e = np.array([[0.1, 0.1, 0.1], 
-                   [0.1, 0.1, 0.1], 
-                   [0.1, 0.1, 0.1]]) 
-                   
 
 
 #=============================================================================
@@ -59,25 +50,17 @@ Dp_e = np.array([[0.1, 0.1, 0.1],
 
 
 def G(s):
-    dim = np.shape(Kp)
-    G = np.zeros((dim))
-    G = Kp*np.exp(-Dp*s)/(taup*s + 1)
-    return(G)
+    return(Kp*np.exp(-Dp*s)/(taup*s + 1))
     
 def L(s):
-    return(Kc*G(s))   #SVD of L = KG)
+    return(Kc*G(s))                         #SVD of L = KG)
     
 def S(s):
-    return(la.inv((np.eye(3) + L(s))))   #SVD of S = 1/(I + L)
+    return(la.inv((np.eye(3) + L(s))))      #SVD of S = 1/(I + L)
     
 def T(s):
-    return(L(s)*S(s))   #SVD of T = L/(I + L)
+    return(L(s)*S(s))                       #SVD of T = L/(I + L)
     
-def Gp(s):
-    dim = np.shape(Kp)
-    Gp = np.zeros((dim))
-    G = Kp*np.exp(-Dp*s)/(taup*s + 1)
-    return(G)  
     
 
 def Gd(s):
@@ -198,11 +181,9 @@ def perf_Wp():
             wB = w[i]
             f = 1  
     M = 2
-    A = 0.5
+    A = utils.sigmas(S(0))[0]
     for i in range(len(w)):
         Wp[i] = np.abs((w[i]*1j/M + wB) / (w[i]*1j + wB*A))                                              
-    lineX = np.ones(10)*wB
-    lineY = np.linspace(0.001, 100, 10)
     plt.figure(2)
     plt.clf()
     plt.subplot(211)
@@ -231,7 +212,7 @@ def perf_Wp():
     fig.subplots_adjust(right=0.9)
     plt.grid(True)
     plt.show()
-    return(wB,wC)    
+    return(wB)    
     
     
 def RGAw():
@@ -433,8 +414,7 @@ def nyqPlot():
     x = np.zeros((len(w)))
     y = np.zeros((len(w)))
     for i in range(len(w)):
-        L = Kc*G(w[i]*1j)
-        GL[i] = la.det(np.eye(3) + L)
+        GL[i] = la.det(np.eye(3) + L(w[i]*1j))
         x[i] = np.real(GL[i])
         y[i] = np.imag(GL[i])        
     plt.figure(7)
@@ -444,12 +424,12 @@ def nyqPlot():
     plt.ylabel('Im G(wj)')
     # plotting a unit circle
     x = np.linspace(-1, 1, 200)
-    y_upper = np.sqrt(1-(x)**2)
+    y_up = np.sqrt(1-(x)**2)
     y_down = -1*np.sqrt(1-(x)**2)
-    plt.plot(x, y_upper, 'b:', x, y_down, 'b:', lw=2)
+    plt.plot(x, y_up, 'b:', x, y_down, 'b:', lw=2)
     plt.plot(0, 0, 'r*', ms = 10)
     plt.grid(True)
-    n = 2
+    n = 10
     plt.axis([-n,n,-n,n])
     plt.show()
 
@@ -476,7 +456,7 @@ def nyqPlot():
 
 wB, wC = bodeSVD()
 perf_Wp()
-RGAw()
+#RGAw()
 distRej()
 perfectControl()
 nyqPlot()
@@ -499,14 +479,14 @@ print(np.round(SV[0]/SV[2],3))
 
 
 
-print('')
-print('The bandwidth is: %s rad/s'%(np.round(bodeSVD()[0],3)))
-print('')
-
-
-print('')
-print('The crossover frequency is: %s rad/s'%(np.round(bodeSVD()[1],3)))
-print('')
+#print('')
+#print('The bandwidth is: %s rad/s'%(np.round(bodeSVD()[0],3)))
+#print('')
+#
+#
+#print('')
+#print('The crossover frequency is: %s rad/s'%(np.round(bodeSVD()[1],3)))
+#print('')
 
 #for i in range(len(poleValues)):
 #    for j in range(len(poleDirsIn)):
