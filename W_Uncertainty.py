@@ -101,7 +101,7 @@ def WA(s):
 #=========================================================== 
 #Multiplicative uncertainty Function =======================        
 tm1 = 1./0.05
-tm2 = 1./0.15
+tm2 = 1./0.13
 def WM(s):
     WuM = (tm1*s + 0.2)/((tm2*s + 1))
     return(np.abs(WuM))
