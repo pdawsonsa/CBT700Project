@@ -36,11 +36,11 @@ Dd = np.array([[30.],[40.],[50.]])
 
 
 #Controller
-#Kc = np.array([[0.09, 0., 0.], 
-#               [0., 0.112, 0.],            #Plant as found controller
+#Kc = np.array([[0.08, 0., 0.], 
+#               [0., 0.06, 0.],            #Plant as found controller
 #               [0., 0., 0.15]])
-KcP = np.array([[0.09, 0., 0.], 
-                [0., 0.112, 0.],     
+KcP = np.array([[0.08, 0., 0.], 
+                [0., 0.06, 0.],     
                 [0., 0., 0.15]])
 KcI = np.array([[400., 1., 1.], 
                 [1., 400., 1.],     
@@ -71,15 +71,11 @@ def T(s):
  
 def Gp(s):
     Wo = (20*s + 0.2)/(7.7*s + 1)
-    return(-Wo*T(s))
-    
-    
+    return(-Wo*T(s))   
 
 def Gd(s):
-    dim = np.shape(Kd)
-    G = np.zeros((dim))
-    G = Kd*np.exp(-Dd*s)/(taud*s + 1)
-    return(G)
+    return(Kd*np.exp(-Dd*s)/(taud*s + 1))
+    
     
     
 def poles():  
@@ -196,7 +192,8 @@ def perf_Wp():
     M = 2
     A = 0.3
     for i in range(len(w)):
-        Wp[i] = np.abs((w[i]*1j/M + wB_) / (w[i]*1j + wB_*A))                                              
+#        Wp[i] = np.abs((w[i]*1j/M + wB_) / (w[i]*1j + wB_*A))   
+        Wp[i] = utils.Wp(wB_, A, w[i]*1j)                                      
     plt.figure(2)
     plt.clf()
     plt.subplot(211)
@@ -260,9 +257,7 @@ def RGAw():
             plt.subplot(3,3,n+1)
             plt.semilogx(w, RGAvalues[:,n],'b-', lw=2)
             plt.semilogx(w, np.ones((1000)), 'r:', lw=3)
-            lineX = np.ones(10)*wB
-            lineY = np.linspace(-1, 2, 10)
-            plt.semilogx(lineX, lineY, 'g-')
+            plt.axvline(wB, color='green')
             plt.title('Valve%s  =>  Level%s'%(j+1,i+1), fontsize=10)
             plt.text(0.002,1.8,'wB = %s rad/s'%(np.round(wB,3)), color='green', fontsize=10)
             plt.text(0.002, 1.1,'|$\lambda$$_i$$_j$| = 1',color='red', fontsize=10)
@@ -283,9 +278,7 @@ def RGAw():
     plt.semilogx(w, RGAnum, 'b-')
     BG = fig.patch
     BG.set_facecolor('white')
-    lineX = np.ones(10)*np.min(wB)
-    lineY = np.linspace(0, max(RGAnum), 10)
-    plt.semilogx(lineX, lineY, 'g-')
+    plt.axvline(wB, color='green')
     plt.text(0.002,3.6,'min wB = %s rad/s'%(np.round(np.min(wB),3)), color='green', fontsize=10)
     plt.title('RGA number at varying frequencies', size=16)
     plt.ylabel('RGA number')
@@ -313,21 +306,19 @@ def distRej():
         U, Sv, V = utils.SVD(S(w[i]*1j))
         S1[i] = Sv[2]                      #S = 1/|L + 1| 
         S2[i] = Sv[0]
-        Gd1[i] = 1/la.norm(Gd(w[i]*1j),2)   #Returns largest sing value of Gd(wj)
+        Gd1[i] = 1/utils.sigmas(Gd(w[i]*1j))   #Returns largest sing value of Gd(wj)
         distCondNum[i] = la.norm(G(w[i]*1j),2)*la.norm(la.inv(G(w[i]*1j))*Gd1[i]*Gd(w[i]*1j),2)
         condNum[i] = la.norm(G(w[i]*1j),2)*la.norm(la.inv(G(w[i]*1j)),2)
     plt.figure(5)
     plt.clf()
     plt.subplot(211)
-    lineX = np.ones(10)*wB
-    lineY = np.linspace(0.01, 100, 10)
     plt.loglog(w, S1, 'r-', alpha = 0.4, label = 'min $\sigma$S')
     plt.loglog(w, S2, 'r-', label = 'max $\sigma$S')
     plt.loglog(w, Gd1, 'k-', label = '1/||Gd||$_2$')
-    plt.loglog(lineX, lineY, 'g-')
+    plt.axvline(wB, color='green')
     plt.ylabel('Magnitude')
     plt.xlabel('Frequency [rad/s)]')
-    plt.text(wB*1.1,0.015,'wB = %s rad/s'%(np.round(wB,3)), color='green')
+    plt.text(wB*1.1, 0.015, 'wB = %s rad/s'%(np.round(wB,3)), color='green')
     plt.axis([None, None, None, 10])
     plt.grid(True)
     plt.legend(loc='upper left', fontsize = 12, ncol=5)
@@ -335,10 +326,9 @@ def distRej():
     BG = fig.patch
     BG.set_facecolor('white')
     plt.subplot(212)
-    lineY = np.linspace(0, 12, 10)
     plt.semilogx(w, distCondNum, 'r-', label = 'Dist CondNum')
     plt.semilogx(w, condNum, 'k-', label = 'CondNum')
-    plt.semilogx(lineX, lineY, 'g-')
+    plt.axvline(wB, color='green')
     plt.ylabel('Disturbance condtion number')
     plt.xlabel('Frequency [rad/s)]')
     plt.text(wB*1.1, 0.2, 'wB = %s rad/s'%(np.round(wB,3)), color='green')
@@ -365,15 +355,13 @@ def perfectControl():
     for i in range(len(w)):
         Gt = G(w[i]*1j)                 #Gt just a temp assignmnet for G
         Gdt = Gd(w[i]*1j)               #Gdt just a temp assignmnet for Gd
-        Gd1[i] = la.norm(la.inv(Gt)*Gdt[0], ord=np.inf)
-        Gd2[i] = la.norm(la.inv(Gt)*Gdt[1], ord=np.inf)
-        Gd3[i] = la.norm(la.inv(Gt)*Gdt[2], ord=np.inf)
+        Gd1[i] = la.norm(la.inv(Gt)*Gdt, ord=np.inf)
     plt.figure(6)
     plt.clf()
     plt.subplot(211)
     plt.semilogx(w, Gd1, 'r-', label = '||G$^{-1}$g$_d$1||$_{max}$')
-    plt.semilogx(w, Gd2, 'k-', label = '||G$^{-1}$g$_d$2||$_{max}$')
-    plt.semilogx(w, Gd3, 'b-', label = '||G$^{-1}$g$_d$3||$_{max}$')
+    plt.axvline(wB, color='green')
+    plt.text(wB*1.1, 0.2, 'wB = %s rad/s'%(np.round(wB,3)), color='green')
     plt.ylabel('Magnitude')
     plt.xlabel('Frequency [rad/s)]')
     plt.axis([None, None, None, None])
@@ -399,9 +387,9 @@ def perfectControl():
         S1[i] = Sv[0]
         S2[i] = Sv[1]
         S3[i] = Sv[2]
-        Gd1[i] = np.max(np.abs(np.transpose(np.conj(U[0]))*Gdt[0]) - 1)
-        Gd2[i] = np.max(np.abs(np.transpose(np.conj(U[1]))*Gdt[1]) - 1)
-        Gd3[i] = np.max(np.abs(np.transpose(np.conj(U[2]))*Gdt[2]) - 1)
+        Gd1[i] = np.max(np.abs(np.transpose(np.conj(U[0]))*Gdt) - 1)
+        Gd2[i] = np.max(np.abs(np.transpose(np.conj(U[1]))*Gdt) - 1)
+        Gd3[i] = np.max(np.abs(np.transpose(np.conj(U[2]))*Gdt) - 1)
     plt.subplot(212)
     plt.semilogx(w, S1, 'r-', label = '$\sigma$$_1$(G)')
     plt.semilogx(w, Gd1, 'r-', label = '|u$_1$$^H$g$_d$|', alpha = 0.4)
@@ -426,7 +414,7 @@ def perfectControl():
    
     
 def MIMOnyqPlot():
-    w = np.logspace(-3, 2, 10000)    
+    w = np.logspace(-3, 1, 1000)    
     Lin = np.zeros((len(w)), dtype=complex)
     x = np.zeros((len(w)))
     y = np.zeros((len(w)))
@@ -446,7 +434,7 @@ def MIMOnyqPlot():
     plt.plot(x, y_up, 'b:', x, y_down, 'b:', lw=2)
     plt.plot(0, 0, 'r*', ms = 10)
     plt.grid(True)
-    n = 2
+    n = 3
     plt.axis([-n,n,-n,n])
     fig = plt.gcf()
     BG = fig.patch
@@ -460,23 +448,36 @@ def MIMOnyqPlot():
 
 
 def uncertAnalisys():
+    #Aditive uncertainty Function ==============================        
+    def WA(s):
+        K = 9
+        ta1 = 1./0.35
+        Wa = K/((ta1*s + 1))
+        return(np.abs(Wa))
+    #Multiplicative uncertainty Function =======================        
     def WM(s):
-        tm1 = 1./0.05
-        tm2 = 1./0.13
-        WuM = (tm1*s + 0.2)/((tm2*s + 1))
-        return(np.abs(WuM))     
+        tm1 = 1./0.09
+        tm2 = 1./0.25
+        Wm = (tm1*s + 0.2)/((tm2*s + 1))
+        return(np.abs(Wm))
     def M(s):
-        return(-WM(s) * T(s))
+        Ma = -WA(s) * Kc(s) * S(s)
+        Mm = -WM(s) * T(s)
+        return(Ma, Mm)
     w = np.logspace(-3,0,1000)
-    Mt = np.zeros((len(w)))
+    Mat = np.zeros((len(w)))
+    Mmt = np.zeros((len(w)))
     for i in range(len(w)):
-        Mt[i] = utils.sigmas(M(w[i]*1j))[0]
+        Ma, Mm = M(w[i]*1j)
+        Mat[i] = utils.sigmas(Ma)[0]
+        Mmt[i] = utils.sigmas(Mm)[0]
     plt.figure(8)
     plt.clf()
     plt.subplot(211)
-    plt.semilogx(w, Mt, 'r-', label = 'max $\sigma$(M)')
+    plt.semilogx(w, Mmt, 'r-', label = 'Multiplicative W$_O$')
+    plt.semilogx(w, Mat, 'b-', label = 'Additive W$_A$')
     plt.axvline(wB_, color='blue', ls=':', lw='2')
-    plt.text(wB_*1.1, np.max(Mt)*0.8, 'req wB', color='blue')
+    plt.text(wB_*1.1, np.max(Mmt)*0.9, 'req wB', color='blue')
     plt.axhline(1.0, color='blue', ls = ':', lw='2')
     plt.ylabel('Magnitude')
     plt.xlabel('Frequency [rad/s)]')
