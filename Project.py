@@ -7,13 +7,14 @@ Created on Sat Apr 12 15:12:17 2014
 CBT700 Project: Controlability analysis of MIMO System
 """
 print('')
-print('============================ Started ================================')
+print('============================= Running ================================')
 print('')
 
 import numpy as np
 import scipy.linalg as la
 import matplotlib.pyplot as plt
 import utils
+import uncertainty
 
 
 
@@ -21,15 +22,15 @@ import utils
 #======================= ASSIGNING OF GLOBAL VARIABLES =======================
 
 #Transfer function parameters
-Kp = np.array([[63., 39.2, 10.], 
-               [-27., 49., 16.], 
-               [-18., -21., 20.]])  
+Kp = np.array([[63., 39.2, 8.], 
+               [-27., 49., 12.], 
+               [-18., -21., 16.]])  
 taup = np.array([[52., 68., 60.],
                 [61., 47., 50.],
                 [40., 41., 45.]])
 Dp = np.array([[10., 15., 20.],
                [15., 10., 15.],
-               [15., 15., 10.]])*1  
+               [15., 15., 10.]])*1 
 Kd = np.array([[-2.25],[-1.75],[-0.8]])
 taud = np.array([[40.],[35.],[30.]])
 Dd = np.array([[30.],[40.],[50.]])
@@ -171,6 +172,7 @@ def bodeSVD():
     fig.subplots_adjust(left=0.2) 
     fig.subplots_adjust(right=0.9)
     plt.grid(True)
+#    plt.show()
     return(wC)
 
 
@@ -189,10 +191,9 @@ def perf_Wp():
             wB = w[i]
             f = 1
     wB_ = 0.05      #20 sec 
-    M = 2
+#    M = 2
     A = 0.3
     for i in range(len(w)):
-#        Wp[i] = np.abs((w[i]*1j/M + wB_) / (w[i]*1j + wB_*A))   
         Wp[i] = utils.Wp(wB_, A, w[i]*1j)                                      
     plt.figure(2)
     plt.clf()
@@ -225,7 +226,7 @@ def perf_Wp():
     fig.subplots_adjust(left=0.2) 
     fig.subplots_adjust(right=0.9)
     plt.grid(True)
-    plt.show()
+#    plt.show()
     return(wB)    
     
     
@@ -238,7 +239,7 @@ def RGAw():
     RGAnum = np.zeros((len(w)))
     for i in range(len(w)):
         Gt = np.matrix(G(w[i]*1j))  #Gt is a temp assignment of G
-        RGAm = np.abs(np.array(Gt)*np.array(Gt.I).T)
+        RGAm = np.abs(utils.RGA(Gt))
         RGAvalues[i,0] = (RGAm[0,0])
         RGAvalues[i,1] = (RGAm[1,0])
         RGAvalues[i,2] = (RGAm[2,0])
@@ -272,9 +273,10 @@ def RGAw():
     fig.subplots_adjust(top=0.91) 
     fig.subplots_adjust(left=0.08) 
     fig.subplots_adjust(right=0.98)
+#    plt.show()
     plt.figure(4)
     plt.clf()
-    plt.subplot(212)
+    plt.subplot(211)
     plt.semilogx(w, RGAnum, 'b-')
     BG = fig.patch
     BG.set_facecolor('white')
@@ -291,7 +293,7 @@ def RGAw():
     fig.subplots_adjust(left=0.2) 
     fig.subplots_adjust(right=0.9)
     plt.grid(True)
-    plt.show()
+#    plt.show()
 
     
 
@@ -304,16 +306,15 @@ def distRej():
     condNum = np.zeros((len(w)))
     for i in range(len(w)):
         U, Sv, V = utils.SVD(S(w[i]*1j))
-        S1[i] = Sv[2]                      #S = 1/|L + 1| 
-        S2[i] = Sv[0]
-        Gd1[i] = 1/utils.sigmas(Gd(w[i]*1j))   #Returns largest sing value of Gd(wj)
-        distCondNum[i] = la.norm(G(w[i]*1j),2)*la.norm(la.inv(G(w[i]*1j))*Gd1[i]*Gd(w[i]*1j),2)
-        condNum[i] = la.norm(G(w[i]*1j),2)*la.norm(la.inv(G(w[i]*1j)),2)
+        S1[i] = Sv[0]                      #S = 1/|L + 1| 
+        S2[i] = Sv[2]
+        Gd1[i], distCondNum[i] = utils.distRej(G(w[i]*1j), Gd(w[i]*1j))
+        condNum[i] = utils.sigmas(G(w[i]*1j),)[0]*utils.sigmas(la.inv(G(w[i]*1j)))[0]
     plt.figure(5)
     plt.clf()
     plt.subplot(211)
-    plt.loglog(w, S1, 'r-', alpha = 0.4, label = 'min $\sigma$S')
-    plt.loglog(w, S2, 'r-', label = 'max $\sigma$S')
+    plt.loglog(w, S1, 'r-', label = 'max $\sigma$S')
+    plt.loglog(w, S2, 'r-', alpha = 0.4, label = 'min $\sigma$S')
     plt.loglog(w, Gd1, 'k-', label = '1/||Gd||$_2$')
     plt.axvline(wB, color='green')
     plt.ylabel('Magnitude')
@@ -342,7 +343,7 @@ def distRej():
     fig.subplots_adjust(top=0.9) 
     fig.subplots_adjust(left=0.2) 
     fig.subplots_adjust(right=0.9)
-    plt.show()
+#    plt.show()
 
     
 
@@ -355,18 +356,23 @@ def perfectControl():
     for i in range(len(w)):
         Gt = G(w[i]*1j)                 #Gt just a temp assignmnet for G
         Gdt = Gd(w[i]*1j)               #Gdt just a temp assignmnet for Gd
-        Gd1[i] = la.norm(la.inv(Gt)*Gdt, ord=np.inf)
+#        Gd1[i] = la.norm(la.inv(Gt)*Gdt, ord=np.inf)
+        Gd1[i] = utils.sigmas(la.inv(Gt)*Gdt)[0]
+        Gd2[i] = utils.sigmas(la.inv(Gt)*Gdt)[1]
+        Gd3[i] = utils.sigmas(la.inv(Gt)*Gdt)[2]
     plt.figure(6)
     plt.clf()
     plt.subplot(211)
-    plt.semilogx(w, Gd1, 'r-', label = '||G$^{-1}$g$_d$1||$_{max}$')
+    plt.semilogx(w, Gd1, 'r-', label = '|G$^{-1}$$_1$g$_d$|')
+    plt.semilogx(w, Gd2, 'b-', label = '|G$^{-1}$$_2$g$_d$|')
+    plt.semilogx(w, Gd3, 'k-', label = '|G$^{-1}$$_3$g$_d$|')
     plt.axvline(wB, color='green')
-    plt.text(wB*1.1, 0.2, 'wB = %s rad/s'%(np.round(wB,3)), color='green')
+    plt.text(wB*1.1, np.max(Gd1), 'wB = %s rad/s'%(np.round(wB,3)), color='green')
     plt.ylabel('Magnitude')
     plt.xlabel('Frequency [rad/s)]')
     plt.axis([None, None, None, None])
     plt.grid(True)
-    plt.legend(loc='upper left', fontsize = 12, ncol=5)
+    plt.legend(loc='upper left', fontsize = 12, ncol=1)
     fig = plt.gcf()
     BG = fig.patch
     BG.set_facecolor('white')
@@ -409,7 +415,7 @@ def perfectControl():
     fig.subplots_adjust(top=0.9) 
     fig.subplots_adjust(left=0.2) 
     fig.subplots_adjust(right=0.9)   
-    plt.show()     
+#    plt.show()     
 
    
     
@@ -439,11 +445,11 @@ def MIMOnyqPlot():
     fig = plt.gcf()
     BG = fig.patch
     BG.set_facecolor('white')
-    fig.subplots_adjust(bottom=0.6) 
+    fig.subplots_adjust(bottom=0.2) 
     fig.subplots_adjust(top=0.9) 
-    fig.subplots_adjust(left=0.6) 
-    fig.subplots_adjust(right=0.9)   
-    plt.show()   
+    fig.subplots_adjust(left=0.2) 
+    fig.subplots_adjust(right=0.9)  
+#    plt.show()   
 
 
 
@@ -467,10 +473,16 @@ def uncertAnalisys():
     w = np.logspace(-3,0,1000)
     Mat = np.zeros((len(w)))
     Mmt = np.zeros((len(w)))
+    Su = np.zeros((len(w)))
+    Tu = np.zeros((len(w)))
+    WI = np.zeros((len(w)))
     for i in range(len(w)):
         Ma, Mm = M(w[i]*1j)
         Mat[i] = utils.sigmas(Ma)[0]
         Mmt[i] = utils.sigmas(Mm)[0]
+        WI[i] = np.abs(WM(w[i]*1j))
+        Su[i] = utils.sigmas(S(w[i]*1j))[0]
+        Tu[i] = utils.sigmas(T(w[i]*1j))[0]
     plt.figure(8)
     plt.clf()
     plt.subplot(211)
@@ -484,6 +496,16 @@ def uncertAnalisys():
     plt.axis([None, None, None, None])
     plt.grid(True)
     plt.legend(loc='upper left', fontsize = 12, ncol=5)
+    plt.subplot(212)
+    plt.loglog(w, Tu, 'r-')
+    plt.loglog(w, 1/WI, 'k:', lw='2')
+    plt.ylabel('Magnitude')
+    plt.xlabel('Frequency [rad/s)]')
+    plt.axis([None, None, None, None])
+    plt.text(0.2, np.max(Tu), '|T|$_{(not RS)}$', color='red')
+#    plt.text(0.11, np.max(Tu)*0.4, '|T|$_{(RS)}$', color='green')
+    plt.text(0.01, 5, '1/|W$_I$|')
+    plt.grid(True)
     fig = plt.gcf()
     BG = fig.patch
     BG.set_facecolor('white')
@@ -491,27 +513,15 @@ def uncertAnalisys():
     fig.subplots_adjust(top=0.9) 
     fig.subplots_adjust(left=0.2) 
     fig.subplots_adjust(right=0.9)   
-    plt.show()  
+#    plt.show()  
     
 
 #=============================================================================
 #=========================== OUTPUTS AND FIGURES =============================
-    
 
-#print('G matrix:')
-#print(G(0))
-#print('')
-#print('Gd matrix:')
-#print(Gd(0))
-#print('')
+
 
 poleValues, poleDirsIn, poleDirsOut = poles()
-#for i in range(9):
-#    print('Pole => %s'%(round(poleValues[i], 4)))
-#    print('Input1 direction => %s    Output1 direction => %s'%(poleDirsIn[0,i], poleDirsOut[0,i]))
-#    print('Input2 direction => %s    Output2 direction => %s'%(poleDirsIn[1,i], poleDirsOut[1,i]))
-#    print('Input3 direction => %s    Output3 direction => %s'%(poleDirsIn[2,i], poleDirsOut[2,i]))
-#    print('')
 
 wC = bodeSVD()
 wB = perf_Wp()
@@ -537,21 +547,15 @@ print('')
 print('Condition number:')
 print(np.round(SV[0]/SV[2],3))
 
+plt.figure(9)
+uncertainty.W()
 
-
-#print('')
-#print('The bandwidth is: %s rad/s'%(np.round(bodeSVD()[0],3)))
-#print('')
-#
-#
-#print('')
-#print('The crossover frequency is: %s rad/s'%(np.round(bodeSVD()[1],3)))
-#print('')
 
 #for i in range(len(poleValues)):
 #    for j in range(len(poleDirsIn)):
 #        print('%s'%(np.round(poleDirsIn[j,i],4)))
 
-
-
-print('============================== END ==================================')        
+print('')
+print('=============================== END ==================================') 
+plt.show()
+       

@@ -6,7 +6,7 @@ Created on Thu May 15 16:36:23 2014
 """
 
 print('')
-print('============================ Started ================================')
+print('===================== Running W_Uncertainty.py =======================')
 print('')
 
 import numpy as np
@@ -30,9 +30,10 @@ Kp_e = np.array([[0.090, 0.070, 0.040],
 taup_e = np.array([[0.200, 0.147, 0.167], 
                    [0.167, 0.213, 0.200], 
                    [0.250, 0.250, 0.222]]) 
-Dp_e = np.array([[1.000, 0.333, 0.500], 
-                 [0.667, 1.000, 0.667], 
-                 [0.667, 0.667, 1.000]])
+Dp_e = np.array([[0.500, 0.333, 0.250], 
+                 [0.333, 0.500, 0.333], 
+                 [0.333, 0.333, 0.500]])
+
 
 
 def G(s):
@@ -83,40 +84,41 @@ def GpPlot(row, col, figNum):
     fig.subplots_adjust(top=0.9) 
     fig.subplots_adjust(left=0.2) 
     fig.subplots_adjust(right=0.9)
-    plt.show
 
+plt.clf()
+def errorPlot():
+    for i in range(3):
+        for j in range(3):
+            GpPlot(i, j, 9)
 
-
-for i in range(3):
-    for j in range(3):
-        GpPlot(i, j, 101)
+errorPlot()
         
 #Aditive uncertainty Function ==============================        
-K = 7.5
-ta1 = 1./0.01
-ta2 = 1./0.06
+K = 9
+ta1 = 1./0.35
 def WA(s):
-    Wu = K*(ta1*s + 1)/((ta2*s + 1)**2)
-    return(np.abs(Wu))
+    Wa = K/((ta1*s + 1))
+    return(np.abs(Wa))
 #=========================================================== 
 #Multiplicative uncertainty Function =======================        
-tm1 = 1./0.05
-tm2 = 1./0.13
+tm1 = 1./0.09
+tm2 = 1./0.25
 def WM(s):
-    WuM = (tm1*s + 0.2)/((tm2*s + 1))
-    return(np.abs(WuM))
+    Wm = (tm1*s + 0.2)/((tm2*s + 1))
+    return(np.abs(Wm))
 #===========================================================   
 plt.subplot(211)    
 w = np.logspace(-3,1,1000)
 plt.loglog(w, WA(w*1j), 'r-', lw=2)
 plt.axvline(1./ta1)
-plt.axvline(1./ta2)
 
 plt.subplot(212)    
 w = np.logspace(-3,1,1000)
 plt.loglog(w, WM(w*1j), 'r-', lw=2)
 plt.axvline(1./tm1)
 plt.axvline(1./tm2)
+
+    
 
     
 

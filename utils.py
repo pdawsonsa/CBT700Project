@@ -305,15 +305,27 @@ def tf_step(tf, t_final=10, initial_val=0, steps=100):
 
 def sigmas(A):
     """
-    Return the singular values of A
+    Returns the singular values of A
+    
+    Parameters
+    ----------
+    A : array
+        Transfer function matrix.
+        
+    Returns
+    -------
+    :math:`\sigma` (A) : array
+        Singular values of A arranged in decending order.
 
     This is a convenience wrapper to enable easy calculation of
     singular values over frequency
 
-    Example:
-    >> A = numpy.array([[1, 2],
-                        [3, 4]])
-    >> sigmas(A)
+    Example
+    -------
+    
+    >>> A = numpy.array([[1, 2],
+                         [3, 4]])
+    >>> sigmas(A)
     array([ 5.4649857 ,  0.36596619])
 
     """
@@ -323,20 +335,98 @@ def sigmas(A):
 
 def SVD(Gin):
     """
-    Return the singular values (S) as well as the input and output
+    Returns the singular values (Sv) as well as the input and output
     singular vectors (V and U respectively).   
     
-    SVD(G) = U S VH  where VH is the complec conjugate transpose of V.
-    Here we will return V and not VH.
+    Parameters
+    ----------
+    Gin : matrix of complex numbers
+        Transfer function matrix.
+    
+    Returns
+    -------
+    U : matrix of complex numbers
+        Unitary matrix of output singular vectors.
+        
+    Sv : array
+        Singular values of `Gin` arranged in decending order.
+        
+    V : matrix of complex numbers
+        Unitary matrix of input singular vectors. 
+    
+    NOTE
+    ----
+    `SVD(G) = U Sv VH`  where `VH` is the complex conjugate transpose of `V`.
+    Here we return `V` and not `VH`.
 
     This is a convenience wrapper to enable easy calculation of
-    singular values and their associated singular vectors.
-    """
-    U,S,VH = numpy.linalg.svd(Gin)
-    V = numpy.conj(numpy.transpose(VH))
-    return(U, S, V)
+    singular values and their associated singular vectors as in Skogestad.
     
+    """
+    U, Sv, VH = numpy.linalg.svd(Gin)
+    V = numpy.conj(numpy.transpose(VH))
+    return(U, Sv, V)
+ 
 
+def Wp(wB, A, s):
+    """
+    Computes the magnitude of the performance weighting function 
+    as a function of s => `|Wp(s)|`.
+    
+    Parameters
+    ----------
+    wB : flaot
+         Minimum bandwidth frequency requirment.
+    
+    A : float
+        Maximum steady state tracking error.
+    
+    s : complex 
+        Typically `w*1j`.
+        
+    Returns
+    -------
+    `|Wp(s)|` : float
+        The magnitude of the performance weighting fucntion at a specific frequency (s).
+        
+    NOTE
+    ----
+    This is based on Skogestad eq 2.105 and is just one example of a performance weighting function.
+    
+    """
+    M = 2
+    return(numpy.abs((s/M + wB) / (s + wB*A)))     
+
+
+def distRej(G, gd):
+    """
+    Convenience wrapper for calculation of ||gd||2, and the 
+    disturbace condition number for each disturbance in your Gd matrix.
+    
+    Parameters
+    ----------    
+    G : matrix of complex numbers
+        System transfer function matrix.
+    
+    gd : Vector of complex numbers
+        Single disturbance vector (gdi) from your disturbance matrix Gd.
+        
+    Returns
+    -------
+    1/||gd|| :math:`_2` : float
+        The inverse of the 2-norm of a single disturbance gd.
+    
+    Disturbance Condition Number : float
+        The disturbance condition number :math:`\sigma` (G) :math:`\sigma` (G :math:`^{-1}` yd)
+    
+    """
+    
+    gd1 = 1/numpy.linalg.norm((gd),2)   #Returns largest sing value of gd(wj)
+    yd = gd1*gd
+    distCondNum = sigmas(G)[0] * sigmas(numpy.linalg.inv(G)*yd)[0]
+    return(gd1, distCondNum)
+
+   
 def feedback_mimo(forward, backward=None, positive=False):
     """
     Calculates a feedback loop
