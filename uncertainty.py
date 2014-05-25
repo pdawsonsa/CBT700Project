@@ -39,7 +39,7 @@ def W():
     
     def G(s):
         return(Kp*np.exp(-Dp*s)/(taup*s + 1))
-    
+            
     
     
     def Gp(s, row, col, n):
@@ -56,7 +56,8 @@ def W():
         Gp_Gadd = np.abs(Gp - G(s)[row, col])                  #Aditive uncertainty
         Gp_Gmult = np.abs((Gp - G(s)[row, col])/G(s)[row, col]) #Multiplicative uncertainty
         return(Gp_Gadd, Gp_Gmult)
-    
+
+
     def GpPlot(row, col):
         n = 4
         GpsAdd = np.zeros((n**3,1000), dtype=complex)
@@ -65,10 +66,9 @@ def W():
         for i in range(1000):
             GpsAdd[:,i], GpsMult[:,i] = Gp(w[i]*1j, row, col, n)
         plt.figure(9)
-    #    plt.clf()
         plt.subplot(211)
         for i in range(n**3):
-            plt.loglog(w, GpsAdd[i,],'-', color = ([row*0.3, col*0.3, 1]), alpha=0.2)
+            plt.loglog(w, GpsAdd[i,],'-', color = ([row*0.3, col*0.3, 1.]), alpha=0.2)
             plt.grid(True)
             plt.ylabel('|Additive Uncertainty|')
             plt.xlabel('Frequency [rad/s)]')
@@ -85,6 +85,7 @@ def W():
         fig.subplots_adjust(top=0.9) 
         fig.subplots_adjust(left=0.2) 
         fig.subplots_adjust(right=0.9)
+        
     
     plt.clf()
     def errorPlot():
@@ -93,7 +94,7 @@ def W():
                 GpPlot(i, j)
     
     errorPlot()
-            
+  
     #Aditive uncertainty Function ==============================        
     K = 9
     ta1 = 1./0.35
@@ -118,6 +119,4 @@ def W():
     plt.loglog(w, WM(w*1j), 'r-', lw=2)
     plt.axvline(1./tm1)
     plt.axvline(1./tm2)
-
-
-
+    

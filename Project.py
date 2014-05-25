@@ -30,7 +30,7 @@ taup = np.array([[52., 68., 60.],
                 [40., 41., 45.]])
 Dp = np.array([[10., 15., 20.],
                [15., 10., 15.],
-               [15., 15., 10.]])*1 
+               [15., 15., 10.]])*1
 Kd = np.array([[-2.25],[-1.75],[-0.8]])
 taud = np.array([[40.],[35.],[30.]])
 Dd = np.array([[30.],[40.],[50.]])
@@ -284,7 +284,7 @@ def RGAw():
     plt.text(0.002,3.6,'min wB = %s rad/s'%(np.round(np.min(wB),3)), color='green', fontsize=10)
     plt.title('RGA number at varying frequencies', size=16)
     plt.ylabel('RGA number')
-    plt.xlabel('Frequency [rad/s)]')
+    plt.xlabel('Frequency [rad/s]')
     fig = plt.gcf()
     BG = fig.patch
     BG.set_facecolor('white')
